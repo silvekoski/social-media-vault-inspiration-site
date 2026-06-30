@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScrapersRouteImport } from './routes/scrapers'
 import { Route as RunsRouteImport } from './routes/runs'
@@ -23,6 +24,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
 import { Route as ArchivePostIdRouteImport } from './routes/archive.$postId'
 
+const TargetsRoute = TargetsRouteImport.update({
+  id: '/targets',
+  path: '/targets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/runs': typeof RunsRoute
   '/scrapers': typeof ScrapersRoute
   '/settings': typeof SettingsRoute
+  '/targets': typeof TargetsRoute
   '/archive/$postId': typeof ArchivePostIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/runs': typeof RunsRoute
   '/scrapers': typeof ScrapersRoute
   '/settings': typeof SettingsRoute
+  '/targets': typeof TargetsRoute
   '/archive/$postId': typeof ArchivePostIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/runs': typeof RunsRoute
   '/scrapers': typeof ScrapersRoute
   '/settings': typeof SettingsRoute
+  '/targets': typeof TargetsRoute
   '/archive/$postId': typeof ArchivePostIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/runs'
     | '/scrapers'
     | '/settings'
+    | '/targets'
     | '/archive/$postId'
     | '/projects/$projectId'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/runs'
     | '/scrapers'
     | '/settings'
+    | '/targets'
     | '/archive/$postId'
     | '/projects/$projectId'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/runs'
     | '/scrapers'
     | '/settings'
+    | '/targets'
     | '/archive/$postId'
     | '/projects/$projectId'
   fileRoutesById: FileRoutesById
@@ -195,10 +207,18 @@ export interface RootRouteChildren {
   RunsRoute: typeof RunsRoute
   ScrapersRoute: typeof ScrapersRoute
   SettingsRoute: typeof SettingsRoute
+  TargetsRoute: typeof TargetsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/targets': {
+      id: '/targets'
+      path: '/targets'
+      fullPath: '/targets'
+      preLoaderRoute: typeof TargetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -328,6 +348,7 @@ const rootRouteChildren: RootRouteChildren = {
   RunsRoute: RunsRoute,
   ScrapersRoute: ScrapersRoute,
   SettingsRoute: SettingsRoute,
+  TargetsRoute: TargetsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
