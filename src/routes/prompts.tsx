@@ -256,60 +256,52 @@ function Editor({
 
           {/* Variables */}
           <Section label="Variables" hint="Injected into the template at run time.">
-            <div className="rounded border border-border overflow-hidden">
-              <div className="grid grid-cols-[140px_1fr_1fr_40px] gap-3 px-3 py-2 bg-muted/40 text-[11px] text-muted-foreground">
-                <span>Key</span>
-                <span>Description</span>
-                <span>Example</span>
-                <span className="sr-only">Remove</span>
-              </div>
-              <div className="divide-y divide-border">
-                {cfg.variables.map((v, i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-[140px_1fr_1fr_40px] gap-3 px-3 py-2 items-center text-xs"
+            <div className="space-y-2">
+              {cfg.variables.map((v, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded border border-border px-2.5 py-1.5 text-xs"
+                >
+                  <input
+                    value={v.key}
+                    onChange={(e) => {
+                      const next = [...cfg.variables];
+                      next[i] = { ...v, key: e.target.value };
+                      onChange({ variables: next });
+                    }}
+                    className="w-32 shrink-0 bg-transparent font-mono text-foreground focus:outline-none"
+                  />
+                  <input
+                    value={v.description}
+                    placeholder="description"
+                    onChange={(e) => {
+                      const next = [...cfg.variables];
+                      next[i] = { ...v, description: e.target.value };
+                      onChange({ variables: next });
+                    }}
+                    className="flex-1 min-w-0 bg-transparent text-muted-foreground focus:outline-none"
+                  />
+                  <input
+                    value={v.example}
+                    placeholder="example value"
+                    onChange={(e) => {
+                      const next = [...cfg.variables];
+                      next[i] = { ...v, example: e.target.value };
+                      onChange({ variables: next });
+                    }}
+                    className="flex-1 min-w-0 bg-transparent text-muted-foreground focus:outline-none"
+                  />
+                  <button
+                    onClick={() =>
+                      onChange({ variables: cfg.variables.filter((_, j) => j !== i) })
+                    }
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    title="Remove variable"
                   >
-                    <input
-                      value={v.key}
-                      onChange={(e) => {
-                        const next = [...cfg.variables];
-                        next[i] = { ...v, key: e.target.value };
-                        onChange({ variables: next });
-                      }}
-                      className="bg-transparent font-mono text-foreground focus:outline-none"
-                    />
-                    <input
-                      value={v.description}
-                      placeholder="description"
-                      onChange={(e) => {
-                        const next = [...cfg.variables];
-                        next[i] = { ...v, description: e.target.value };
-                        onChange({ variables: next });
-                      }}
-                      className="bg-transparent text-muted-foreground focus:outline-none"
-                    />
-                    <input
-                      value={v.example}
-                      placeholder="example value"
-                      onChange={(e) => {
-                        const next = [...cfg.variables];
-                        next[i] = { ...v, example: e.target.value };
-                        onChange({ variables: next });
-                      }}
-                      className="bg-transparent text-muted-foreground focus:outline-none"
-                    />
-                    <button
-                      onClick={() =>
-                        onChange({ variables: cfg.variables.filter((_, j) => j !== i) })
-                      }
-                      className="text-muted-foreground hover:text-destructive justify-self-end"
-                      title="Remove variable"
-                    >
-                      Del
-                    </button>
-                  </div>
-                ))}
-              </div>
+                    Del
+                  </button>
+                </div>
+              ))}
             </div>
             <button
               onClick={() =>
@@ -333,23 +325,21 @@ function Editor({
                 .slice()
                 .reverse()
                 .map((v) => (
-                  <div
-                    key={v.version}
-                    className="grid grid-cols-[44px_1fr_110px_88px_auto] gap-3 px-3 py-2 items-center"
-                  >
+                  <div key={v.version} className="flex items-center gap-3 px-3 py-2">
                     <span
                       className={
-                        v.version === prompt.currentVersion
+                        "w-8 shrink-0 " +
+                        (v.version === prompt.currentVersion
                           ? "text-foreground font-medium"
-                          : "text-muted-foreground"
+                          : "text-muted-foreground")
                       }
                     >
                       v{v.version}
                     </span>
-                    <span className="text-muted-foreground truncate">{v.note}</span>
-                    <span className="text-muted-foreground truncate">{v.author}</span>
-                    <span className="text-muted-foreground">{v.date}</span>
-                    <div className="flex gap-3 justify-end text-muted-foreground">
+                    <span className="flex-1 min-w-0 text-muted-foreground truncate">{v.note}</span>
+                    <span className="hidden sm:block w-24 shrink-0 text-muted-foreground truncate">{v.author}</span>
+                    <span className="w-20 shrink-0 text-muted-foreground">{v.date}</span>
+                    <div className="flex gap-3 shrink-0 text-muted-foreground">
                       <button className="hover:text-foreground">Diff</button>
                       <button className="hover:text-foreground">Restore</button>
                     </div>
