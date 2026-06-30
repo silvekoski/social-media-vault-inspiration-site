@@ -56,8 +56,6 @@ function AccountPage() {
             </Field>
           </Section>
 
-          <Divider />
-
           <Section
             title="Login details"
             description="Update the email and password used to sign in to your account."
@@ -77,11 +75,7 @@ function AccountPage() {
             />
           </Section>
 
-          <Divider />
-
           <SsoSection />
-
-          <Divider />
 
           <Section
             title="Active sessions"
@@ -103,8 +97,6 @@ function AccountPage() {
               control={<button className="text-sm underline">Sign out all</button>}
             />
           </Section>
-
-          <Divider />
 
           <Section title="Danger zone">
             <Row
@@ -362,8 +354,4 @@ function Row({
       <div className="shrink-0">{control}</div>
     </div>
   );
-}
-
-function Divider() {
-  return <div className="border-t border-border" />;
 }
