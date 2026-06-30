@@ -8,6 +8,12 @@ import {
 } from "../lib/mock-media-specs";
 import { fmtNum } from "../lib/date";
 import { UploadAnalysisView } from "../components/upload-analysis";
+import {
+  getUploadSubmissions,
+  bitrateRetained,
+  type UploadSubmission,
+} from "../lib/mock-uploads";
+import { scraperById } from "../lib/mock-scrapers";
 
 export const Route = createFileRoute("/media-specs")({
   head: () => ({
@@ -40,9 +46,9 @@ const FORMAT_LABEL: Record<ContentFormat, string> = {
   long: "long",
 };
 
-function bucket<T extends string | number>(
-  rows: MediaSpec[],
-  key: (s: MediaSpec) => T | null | undefined,
+function bucket<Row, T extends string | number>(
+  rows: Row[],
+  key: (s: Row) => T | null | undefined,
 ): Array<{ label: string; count: number }> {
   const m = new Map<string, number>();
   for (const r of rows) {
@@ -56,9 +62,9 @@ function bucket<T extends string | number>(
     .sort((a, b) => b.count - a.count);
 }
 
-function bucketRange(
-  rows: MediaSpec[],
-  key: (s: MediaSpec) => number | null | undefined,
+function bucketRange<Row>(
+  rows: Row[],
+  key: (s: Row) => number | null | undefined,
   ranges: Array<{ label: string; min: number; max: number }>,
 ): Array<{ label: string; count: number }> {
   const counts = ranges.map(() => 0);
@@ -190,6 +196,7 @@ function median(arr: number[]): number {
 
 function MediaSpecsPage() {
   const all = useMemo(() => getMediaSpecs(), []);
+  const subs = useMemo(() => getUploadSubmissions(), []);
   const [view, setView] = useState<"distributions" | "uploads">("distributions");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
   const [format, setFormat] = useState<FormatFilter>("all");
@@ -532,6 +539,137 @@ function MediaSpecsPage() {
             />
           </section>
         )}
+
+        {(platform === "all" || platform === "tiktok") &&
+          (kind === "all" || kind === "video") && (
+            <section className="lg:col-span-2">
+              <h2 className="mt-6 mb-1 text-xs text-foreground flex items-center gap-2">
+                Upload submissions
+              </h2>
+              <p className="text-[11px] text-muted-foreground mb-1">
+                Self-reported capture context and original specs submitted via the ingest API,
+                across {fmtNum(subs.length)} TikTok video posts. Compare against the scraped
+                delivery distributions above to see platform transcoding behavior.
+              </p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10">
+                <div>
+                  <Panel
+                    title="Capture device"
+                    subtitle="device.model"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(subs, (s) => s.device.model)}
+                    mono
+                  />
+                  <Panel
+                    title="Operating system"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(subs, (s) => s.device.os)}
+                    mono
+                  />
+                  <Panel
+                    title="Network connection"
+                    subtitle="at upload time"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(subs, (s) => s.network.connection)}
+                    mono
+                  />
+                  <Panel
+                    title="Uplink speed"
+                    subtitle="measured at submit"
+                    total={subs.length}
+                    rows={bucketRange<UploadSubmission>(subs, (s) => s.network.upMbps, [
+                      { label: "< 5 Mb/s", min: 0, max: 5 },
+                      { label: "5–15 Mb/s", min: 5, max: 15 },
+                      { label: "15–30 Mb/s", min: 15, max: 30 },
+                      { label: "30–60 Mb/s", min: 30, max: 60 },
+                      { label: "≥ 60 Mb/s", min: 60, max: Infinity },
+                    ])}
+                    mono
+                  />
+                  <Panel
+                    title="Capture dynamic range"
+                    subtitle="original.hdr"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(subs, (s) => s.original.hdr)}
+                    mono
+                  />
+                  <Panel
+                    title="Scraper used"
+                    subtitle="retrieved the delivery"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(
+                      subs,
+                      (s) => scraperById[s.scraperId]?.name ?? s.scraperId,
+                    )}
+                    mono
+                  />
+                </div>
+                <div>
+                  <Panel
+                    title="Original codec"
+                    subtitle="as uploaded"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(subs, (s) =>
+                      s.original.videoCodec.toUpperCase(),
+                    )}
+                    mono
+                  />
+                  <Panel
+                    title="Original resolution"
+                    subtitle="capture width × height"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(
+                      subs,
+                      (s) => `${s.original.width}×${s.original.height}`,
+                    )}
+                    mono
+                  />
+                  <Panel
+                    title="Original frame rate"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(
+                      subs,
+                      (s) => `${s.original.frameRate} fps`,
+                    )}
+                    mono
+                  />
+                  <Panel
+                    title="Platform transcode verdict"
+                    subtitle="upload → delivery"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(subs, (s) => s.verdict)}
+                    mono
+                  />
+                  <Panel
+                    title="Bitrate retained"
+                    subtitle="delivered ÷ original"
+                    total={subs.length}
+                    rows={bucketRange<UploadSubmission>(
+                      subs,
+                      (s) => bitrateRetained(s) * 100,
+                      [
+                        { label: "< 10%", min: 0, max: 10 },
+                        { label: "10–20%", min: 10, max: 20 },
+                        { label: "20–35%", min: 20, max: 35 },
+                        { label: "35–60%", min: 35, max: 60 },
+                        { label: "≥ 60%", min: 60, max: Infinity },
+                      ],
+                    )}
+                    mono
+                  />
+                  <Panel
+                    title="Data sharing"
+                    subtitle="operator opt-in"
+                    total={subs.length}
+                    rows={bucket<UploadSubmission, string>(subs, (s) =>
+                      s.shared ? "Shared with maintainer" : "Private / self-hosted",
+                    )}
+                    mono
+                  />
+                </div>
+              </div>
+            </section>
+          )}
       </div>
       </>
       )}
