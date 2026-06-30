@@ -8,11 +8,18 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Search, ChevronDown } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  LayoutDashboard,
+  FolderKanban,
+  Boxes,
+  Building2,
+} from "lucide-react";
 import { organizations } from "../lib/mock-orgs";
 import { useCurrentOrg, setCurrentOrgId } from "../lib/current-org";
 import { useProjectsForOrg, useCurrentProjectId, setCurrentProjectId } from "../lib/current-project";
@@ -111,16 +118,20 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const navGroups = [
+type NavLink = { to: string; label: string };
+type NavSection =
+  | { type: "link"; to: string; label: string; icon: typeof LayoutDashboard }
+  | { type: "group"; key: string; label: string; scope: string; icon: typeof LayoutDashboard; items: NavLink[] };
+
+const navSections: NavSection[] = [
+  { type: "link", to: "/", label: "Overview", icon: LayoutDashboard },
+  { type: "link", to: "/projects", label: "Projects", icon: FolderKanban },
   {
-    heading: null,
-    items: [
-      { to: "/", label: "Overview" },
-      { to: "/projects", label: "Projects" },
-    ],
-  },
-  {
-    heading: "Project",
+    type: "group",
+    key: "project",
+    label: "Project",
+    scope: "Project-specific",
+    icon: Boxes,
     items: [
       { to: "/runs", label: "Runs" },
       { to: "/creators", label: "Creators" },
@@ -128,7 +139,11 @@ const navGroups = [
     ],
   },
   {
-    heading: "Organization",
+    type: "group",
+    key: "organization",
+    label: "Organization",
+    scope: "Organization-wide",
+    icon: Building2,
     items: [
       { to: "/media-specs", label: "Media Specs" },
       { to: "/scrapers", label: "Scrapers" },
@@ -217,41 +232,96 @@ function Sidebar() {
     select: (s) => s.location.pathname,
   });
 
+  const isLinkActive = (to: string) =>
+    currentPath === to || (to !== "/" && currentPath.startsWith(to + "/"));
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    project: true,
+    organization: true,
+  });
+
+  const toggleGroup = (key: string) =>
+    setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+
   return (
     <aside className="w-64 border-r border-border flex flex-col shrink-0 h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="p-6">
-        <div className="mb-8">
-          <span className="text-xs font-semibold text-foreground">
-            Vault-01
-          </span>
+      <div className="p-4">
+        <div className="mb-6 px-2">
+          <span className="text-xs font-semibold text-foreground">Vault-01</span>
         </div>
-        <nav className="space-y-6">
-          {navGroups.map((group, groupIndex) => (
-            <div key={group.heading ?? `group-${groupIndex}`} className="space-y-1">
-              {group.heading && (
-                <h2 className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  {group.heading}
-                </h2>
-              )}
-              {group.items.map((item) => {
-                const isActive = currentPath === item.to || currentPath.startsWith(item.to + "/");
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
+        <nav className="space-y-1">
+          {navSections.map((section) => {
+            if (section.type === "link") {
+              const Icon = section.icon;
+              const active = isLinkActive(section.to);
+              return (
+                <Link
+                  key={section.to}
+                  to={section.to}
+                  className={
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm " +
+                    (active
+                      ? "bg-accent text-accent-foreground font-medium"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground")
+                  }
+                >
+                  <Icon className="size-4 shrink-0" />
+                  {section.label}
+                </Link>
+              );
+            }
+
+            const Icon = section.icon;
+            const isOpen = openGroups[section.key];
+            const groupActive = section.items.some((i) => isLinkActive(i.to));
+            return (
+              <div key={section.key} className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(section.key)}
+                  aria-expanded={isOpen}
+                  className={
+                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm " +
+                    (groupActive
+                      ? "text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground")
+                  }
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span className="flex-1 text-left">{section.label}</span>
+                  <ChevronDown
                     className={
-                      "block px-3 py-2 text-sm " +
-                      (isActive
-                        ? "text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground")
+                      "size-4 shrink-0 transition-transform " + (isOpen ? "" : "-rotate-90")
                     }
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+                  />
+                </button>
+                <p className="px-3 pl-10 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  {section.scope}
+                </p>
+                {isOpen && (
+                  <div className="mt-1 ml-5 flex flex-col border-l border-border pl-3">
+                    {section.items.map((item) => {
+                      const active = isLinkActive(item.to);
+                      return (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          className={
+                            "rounded-md px-3 py-1.5 text-sm " +
+                            (active
+                              ? "bg-accent text-accent-foreground font-medium"
+                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground")
+                          }
+                        >
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
       </div>
     </aside>
