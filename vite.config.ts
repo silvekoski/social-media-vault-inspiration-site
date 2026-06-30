@@ -16,6 +16,13 @@ export default defineConfig({
   // Without this, Vite returns 403 "Blocked request. This host is not allowed".
   vite: {
     server: {
+      // v0's preview probes port 5173; the Lovable sandbox config otherwise binds 8080,
+      // which causes "Timeout waiting for dev server at port 5173 to be ready".
+      host: true,
+      port: 5173,
+      strictPort: true,
+      // Allow the v0/proxied preview hostnames to reach the dev server.
+      // Without this, Vite returns 403 "Blocked request. This host is not allowed".
       allowedHosts: true,
     },
   },
