@@ -6,7 +6,7 @@ import { useScopedPrompts } from "../lib/org-scope";
 export const Route = createFileRoute("/prompts")({
   head: () => ({
     meta: [
-      { title: "Prompts , Vault" },
+      { title: "Prompts · Vault" },
       { name: "description", content: "Manage AI analysis prompts" },
     ],
   }),
@@ -97,18 +97,22 @@ function PromptsPage() {
 
   return (
     <section className="h-full">
-      <div className="grid grid-cols-[280px_1fr] h-full">
-        {/* Left rail */}
-        <aside className="border-r border-black/5 overflow-y-auto">
-          <div className="flex items-center justify-between px-5 pt-6 pb-3">
-            <h1 className="text-[11px] text-muted-foreground">
-              Prompts <span className="text-muted-foreground">/ {seedPrompts.length}</span>
+      <div className="grid grid-cols-[260px_minmax(0,1fr)_320px] h-full">
+        {/* Left rail — prompt list */}
+        <aside className="border-r border-border overflow-y-auto">
+          <div className="flex items-center justify-between px-4 h-12 border-b border-border sticky top-0 bg-background">
+            <h1 className="text-sm font-medium text-foreground">
+              Prompts{" "}
+              <span className="text-muted-foreground font-normal">{seedPrompts.length}</span>
             </h1>
-            <button className="text-muted-foreground" title="New prompt">
-              Add
+            <button
+              className="rounded border border-border px-2 py-1 text-xs text-foreground hover:bg-accent"
+              title="New prompt"
+            >
+              New
             </button>
           </div>
-          <div>
+          <div className="py-1">
             {seedPrompts.map((p) => {
               const c = configs[p.id];
               const active = p.id === selectedId;
@@ -116,22 +120,27 @@ function PromptsPage() {
                 <button
                   key={p.id}
                   onClick={() => setSelectedId(p.id)}
-                  className={`w-full text-left px-5 py-3 border-l-2  ${
-                    active
-                      ? "border-foreground bg-black/[0.03]"
-                      : "border-transparent "
-                  }`}
+                  className={
+                    "w-full text-left px-4 py-3 border-l-2 transition-colors " +
+                    (active
+                      ? "border-foreground bg-accent"
+                      : "border-transparent hover:bg-accent/50")
+                  }
                 >
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-sm text-foreground truncate">{p.name}</span>
                     <span
-                      className={`size-1.5 rounded-sm ${c.enabled ? "bg-primary" : "bg-muted-foreground"}`}
+                      className={
+                        "h-1.5 w-1.5 shrink-0 rounded-full " +
+                        (c.enabled ? "bg-foreground" : "bg-muted-foreground/40")
+                      }
+                      title={c.enabled ? "running" : "paused"}
                     />
                   </div>
-                  <div className="text-[10px] text-muted-foreground truncate">
+                  <div className="text-[11px] text-muted-foreground truncate">
                     {p.provider} · {p.model}
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                  <div className="text-[11px] text-muted-foreground/80 mt-0.5">
                     v{p.currentVersion}/{p.versionCount} · {c.trigger} · {p.appliesTo}
                   </div>
                 </button>
@@ -140,10 +149,12 @@ function PromptsPage() {
           </div>
         </aside>
 
-        {/* Editor */}
-        <div className="overflow-y-auto">
-          <Editor prompt={selected} cfg={cfg} onChange={(patch) => update(selectedId, patch)} />
-        </div>
+        {/* Center — prompt content */}
+        <Editor
+          prompt={selected}
+          cfg={cfg}
+          onChange={(patch) => update(selectedId, patch)}
+        />
       </div>
     </section>
   );
@@ -159,241 +170,309 @@ function Editor({
   onChange: (p: Partial<PromptConfig>) => void;
 }) {
   return (
-    <div className="max-w-3xl mx-auto px-10 py-8">
-      {/* Header */}
-      <header className="flex items-start justify-between pb-6">
-        <div>
-          <div className="text-[10px] text-muted-foreground mb-1">
-            {prompt.id} · v{prompt.currentVersion}
+    <>
+      <div className="overflow-y-auto">
+        {/* Sticky header */}
+        <header className="sticky top-0 z-10 flex items-center justify-between gap-4 h-12 px-6 border-b border-border bg-background">
+          <div className="min-w-0">
+            <h2 className="text-sm font-medium text-foreground truncate">
+              {prompt.name}
+              <span className="ml-2 font-normal text-muted-foreground">
+                {prompt.id} · v{prompt.currentVersion}
+              </span>
+            </h2>
           </div>
-          <h2 className="text-xl font-medium text-foreground">{prompt.name}</h2>
-          <div className="text-[11px] text-muted-foreground mt-1">
+          <div className="flex items-center gap-2 shrink-0">
+            <button className="text-xs text-muted-foreground hover:text-foreground">
+              History
+            </button>
+            <button className="text-xs text-muted-foreground hover:text-foreground">
+              Revert
+            </button>
+            <button className="rounded border border-border px-3 py-1.5 text-xs text-foreground hover:bg-accent">
+              Save v{prompt.versionCount + 1}
+            </button>
+          </div>
+        </header>
+
+        <div className="max-w-3xl mx-auto px-6 py-6">
+          <div className="text-[11px] text-muted-foreground mb-6">
             {prompt.provider} / {prompt.model} · applies to {prompt.appliesTo}
           </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <button className="px-2.5 py-1.5 text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
-            revert
-          </button>
-          <button className="px-3 py-1.5 text-[11px] text-foreground border border-black/10">
-            save v{prompt.versionCount + 1}
-          </button>
-        </div>
-      </header>
 
-      {/* Sections */}
-      <Section label="instructions">
-        <Row label="system">
-          <textarea
-            value={cfg.systemPrompt}
-            onChange={(e) => onChange({ systemPrompt: e.target.value })}
-            rows={3}
-            className={taCls}
-          />
-        </Row>
-        <Row label="template" hint="supports {{variables}}">
-          <textarea
-            value={cfg.userTemplate}
-            onChange={(e) => onChange({ userTemplate: e.target.value })}
-            rows={7}
-            className={taCls}
-          />
-        </Row>
-      </Section>
+          {/* Instructions */}
+          <Section label="Instructions" hint="The system message and templated user prompt.">
+            <Field label="System message">
+              <textarea
+                value={cfg.systemPrompt}
+                onChange={(e) => onChange({ systemPrompt: e.target.value })}
+                rows={3}
+                className={taCls}
+              />
+            </Field>
+            <Field
+              label="User template"
+              hint="Supports {{variables}} from the table below."
+            >
+              <textarea
+                value={cfg.userTemplate}
+                onChange={(e) => onChange({ userTemplate: e.target.value })}
+                rows={7}
+                className={taCls + " font-mono"}
+              />
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {cfg.variables.map((v) => (
+                  <span
+                    key={v.key}
+                    className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
+                  >
+                    {`{{${v.key}}}`}
+                  </span>
+                ))}
+              </div>
+            </Field>
+          </Section>
 
-      <Section label="sampling">
-        <NumRow label="temperature" value={cfg.temperature} step={0.05} min={0} max={2} onChange={(v) => onChange({ temperature: v })} />
-        <NumRow label="top_p" value={cfg.topP} step={0.05} min={0} max={1} onChange={(v) => onChange({ topP: v })} />
-        <NumRow label="max_tokens" value={cfg.maxTokens} step={64} min={64} max={8192} onChange={(v) => onChange({ maxTokens: v })} />
-        <NumRow label="frequency_penalty" value={cfg.frequencyPenalty} step={0.1} min={-2} max={2} onChange={(v) => onChange({ frequencyPenalty: v })} />
-        <NumRow label="presence_penalty" value={cfg.presencePenalty} step={0.1} min={-2} max={2} onChange={(v) => onChange({ presencePenalty: v })} />
-        <Row label="stop">
-          <input
-            type="text"
-            value={cfg.stopSequences.join(", ")}
-            onChange={(e) =>
-              onChange({
-                stopSequences: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-              })
-            }
-            placeholder="comma separated"
-            className={inCls}
-          />
-        </Row>
-      </Section>
+          {/* Response */}
+          <Section label="Response" hint="How the model output is parsed.">
+            <Field label="Format">
+              <Segmented
+                value={cfg.responseFormat}
+                options={["text", "json", "json_schema"]}
+                onChange={(v) => onChange({ responseFormat: v as ResponseFormat })}
+              />
+            </Field>
+            {cfg.responseFormat === "json_schema" && (
+              <Field label="JSON schema">
+                <textarea
+                  value={cfg.jsonSchema}
+                  onChange={(e) => onChange({ jsonSchema: e.target.value })}
+                  rows={8}
+                  className={taCls + " font-mono"}
+                />
+              </Field>
+            )}
+          </Section>
 
-      <Section label="response">
-        <Row label="format">
-          <Segmented
-            value={cfg.responseFormat}
-            options={["text", "json", "json_schema"]}
-            onChange={(v) => onChange({ responseFormat: v as ResponseFormat })}
-          />
-        </Row>
-        {cfg.responseFormat === "json_schema" && (
-          <Row label="schema">
+          {/* Variables */}
+          <Section label="Variables" hint="Injected into the template at run time.">
+            <div className="rounded border border-border overflow-hidden">
+              <div className="grid grid-cols-[140px_1fr_1fr_40px] gap-3 px-3 py-2 bg-muted/40 text-[11px] text-muted-foreground">
+                <span>Key</span>
+                <span>Description</span>
+                <span>Example</span>
+                <span className="sr-only">Remove</span>
+              </div>
+              <div className="divide-y divide-border">
+                {cfg.variables.map((v, i) => (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[140px_1fr_1fr_40px] gap-3 px-3 py-2 items-center text-xs"
+                  >
+                    <input
+                      value={v.key}
+                      onChange={(e) => {
+                        const next = [...cfg.variables];
+                        next[i] = { ...v, key: e.target.value };
+                        onChange({ variables: next });
+                      }}
+                      className="bg-transparent font-mono text-foreground focus:outline-none"
+                    />
+                    <input
+                      value={v.description}
+                      placeholder="description"
+                      onChange={(e) => {
+                        const next = [...cfg.variables];
+                        next[i] = { ...v, description: e.target.value };
+                        onChange({ variables: next });
+                      }}
+                      className="bg-transparent text-muted-foreground focus:outline-none"
+                    />
+                    <input
+                      value={v.example}
+                      placeholder="example value"
+                      onChange={(e) => {
+                        const next = [...cfg.variables];
+                        next[i] = { ...v, example: e.target.value };
+                        onChange({ variables: next });
+                      }}
+                      className="bg-transparent text-muted-foreground focus:outline-none"
+                    />
+                    <button
+                      onClick={() =>
+                        onChange({ variables: cfg.variables.filter((_, j) => j !== i) })
+                      }
+                      className="text-muted-foreground hover:text-destructive justify-self-end"
+                      title="Remove variable"
+                    >
+                      Del
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() =>
+                onChange({
+                  variables: [
+                    ...cfg.variables,
+                    { key: "new_var", description: "", example: "" },
+                  ],
+                })
+              }
+              className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              + Add variable
+            </button>
+          </Section>
+
+          {/* History */}
+          <Section label="Version history">
+            <div className="rounded border border-border divide-y divide-border text-xs">
+              {cfg.versions
+                .slice()
+                .reverse()
+                .map((v) => (
+                  <div
+                    key={v.version}
+                    className="grid grid-cols-[44px_1fr_110px_88px_auto] gap-3 px-3 py-2 items-center"
+                  >
+                    <span
+                      className={
+                        v.version === prompt.currentVersion
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      v{v.version}
+                    </span>
+                    <span className="text-muted-foreground truncate">{v.note}</span>
+                    <span className="text-muted-foreground truncate">{v.author}</span>
+                    <span className="text-muted-foreground">{v.date}</span>
+                    <div className="flex gap-3 justify-end text-muted-foreground">
+                      <button className="hover:text-foreground">Diff</button>
+                      <button className="hover:text-foreground">Restore</button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </Section>
+
+          {/* Notes */}
+          <Section label="Notes">
             <textarea
-              value={cfg.jsonSchema}
-              onChange={(e) => onChange({ jsonSchema: e.target.value })}
-              rows={8}
+              value={cfg.notes}
+              onChange={(e) => onChange({ notes: e.target.value })}
+              rows={2}
+              placeholder="Why this prompt exists, known edge cases, who to ping..."
               className={taCls}
             />
-          </Row>
-        )}
-      </Section>
+          </Section>
 
-      <Section label="execution">
-        <Row label="trigger">
-          <select
-            value={cfg.trigger}
-            onChange={(e) => onChange({ trigger: e.target.value as RunTrigger })}
-            className={inCls}
-          >
-            <option value="manual">manual, operator only</option>
-            <option value="on_capture">on_capture, every new post</option>
-            <option value="on_revision">on_revision, when caption changes</option>
-            <option value="scheduled">scheduled, fixed interval</option>
-          </select>
-        </Row>
-        <Row label="enabled">
-          <button
-            onClick={() => onChange({ enabled: !cfg.enabled })}
-            className="text-xs text-left"
-          >
-            <span className={cfg.enabled ? "text-foreground" : "text-muted-foreground"}>
-              {cfg.enabled ? "● running" : "○ paused"}
-            </span>
-            <span className="text-muted-foreground ml-2">(click to toggle)</span>
-          </button>
-        </Row>
-        <NumRow label="retry_count" value={cfg.retryCount} step={1} min={0} max={5} onChange={(v) => onChange({ retryCount: v })} />
-        <NumRow label="timeout_ms" value={cfg.timeoutMs} step={1000} min={5000} max={120000} onChange={(v) => onChange({ timeoutMs: v })} />
-        <NumRow label="cost_cap_usd" value={cfg.costCapUsd} step={0.01} min={0} max={10} onChange={(v) => onChange({ costCapUsd: v })} />
-        <Row label="fallback">
-          <select
-            value={cfg.fallbackProvider}
-            onChange={(e) => onChange({ fallbackProvider: e.target.value })}
-            className={inCls}
-          >
-            <option value="none">none</option>
-            <option value="gemini">gemini</option>
-            <option value="openai">openai</option>
-            <option value="openrouter">openrouter</option>
-          </select>
-        </Row>
-      </Section>
+          <TestRun cfg={cfg} />
+        </div>
+      </div>
 
-      <Section label="variables">
-        <div className="text-[11px]">
-          {cfg.variables.map((v, i) => (
-            <div key={i} className="grid grid-cols-[120px_1fr_1fr_24px] gap-3 py-1.5 items-center">
+      {/* Right rail — model configuration */}
+      <aside className="border-l border-border overflow-y-auto">
+        <div className="flex items-center h-12 px-4 border-b border-border sticky top-0 bg-background">
+          <h3 className="text-sm font-medium text-foreground">Configuration</h3>
+        </div>
+        <div className="px-4 py-4">
+          <PanelGroup label="Model">
+            <PanelRow label="Provider" value={prompt.provider} />
+            <PanelRow label="Model" value={prompt.model} />
+            <PanelRow
+              label="Fallback"
+              control={
+                <select
+                  value={cfg.fallbackProvider}
+                  onChange={(e) => onChange({ fallbackProvider: e.target.value })}
+                  className={selCls}
+                >
+                  <option value="none">none</option>
+                  <option value="gemini">gemini</option>
+                  <option value="openai">openai</option>
+                  <option value="openrouter">openrouter</option>
+                </select>
+              }
+            />
+          </PanelGroup>
+
+          <PanelGroup label="Sampling">
+            <ParamSlider label="Temperature" value={cfg.temperature} step={0.05} min={0} max={2} onChange={(v) => onChange({ temperature: v })} />
+            <ParamSlider label="Top P" value={cfg.topP} step={0.05} min={0} max={1} onChange={(v) => onChange({ topP: v })} />
+            <ParamSlider label="Max tokens" value={cfg.maxTokens} step={64} min={64} max={8192} onChange={(v) => onChange({ maxTokens: v })} integer />
+            <ParamSlider label="Frequency penalty" value={cfg.frequencyPenalty} step={0.1} min={-2} max={2} onChange={(v) => onChange({ frequencyPenalty: v })} />
+            <ParamSlider label="Presence penalty" value={cfg.presencePenalty} step={0.1} min={-2} max={2} onChange={(v) => onChange({ presencePenalty: v })} />
+            <div className="pt-1">
+              <label className="block text-xs text-muted-foreground mb-1.5">Stop sequences</label>
               <input
-                value={v.key}
-                onChange={(e) => {
-                  const next = [...cfg.variables];
-                  next[i] = { ...v, key: e.target.value };
-                  onChange({ variables: next });
-                }}
-                className="bg-transparent text-foreground focus:outline-none"
+                type="text"
+                value={cfg.stopSequences.join(", ")}
+                onChange={(e) =>
+                  onChange({
+                    stopSequences: e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  })
+                }
+                placeholder="comma separated"
+                className="w-full rounded border border-border bg-muted px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-foreground/40"
               />
-              <input
-                value={v.description}
-                placeholder="description"
-                onChange={(e) => {
-                  const next = [...cfg.variables];
-                  next[i] = { ...v, description: e.target.value };
-                  onChange({ variables: next });
-                }}
-                className="bg-transparent text-muted-foreground focus:outline-none"
-              />
-              <input
-                value={v.example}
-                placeholder="example value"
-                onChange={(e) => {
-                  const next = [...cfg.variables];
-                  next[i] = { ...v, example: e.target.value };
-                  onChange({ variables: next });
-                }}
-                className="bg-transparent text-muted-foreground focus:outline-none"
-              />
-              <button
-                onClick={() => onChange({ variables: cfg.variables.filter((_, j) => j !== i) })}
-                className="text-muted-foreground justify-self-end"
-              >
-                Del
-              </button>
             </div>
-          ))}
-          <button
-            onClick={() =>
-              onChange({
-                variables: [...cfg.variables, { key: "new_var", description: "", example: "" }],
-              })
-            }
-            className="mt-2 text-muted-foreground"
-          >
-            + add variable
-          </button>
+          </PanelGroup>
+
+          <PanelGroup label="Execution">
+            <PanelRow
+              label="Trigger"
+              control={
+                <select
+                  value={cfg.trigger}
+                  onChange={(e) => onChange({ trigger: e.target.value as RunTrigger })}
+                  className={selCls}
+                >
+                  <option value="manual">manual</option>
+                  <option value="on_capture">on capture</option>
+                  <option value="on_revision">on revision</option>
+                  <option value="scheduled">scheduled</option>
+                </select>
+              }
+            />
+            <PanelRow
+              label="Status"
+              control={
+                <button
+                  onClick={() => onChange({ enabled: !cfg.enabled })}
+                  className="inline-flex items-center gap-1.5 text-xs text-foreground"
+                >
+                  <span
+                    className={
+                      "h-2 w-2 rounded-full " +
+                      (cfg.enabled ? "bg-foreground" : "bg-muted-foreground/40")
+                    }
+                  />
+                  {cfg.enabled ? "Running" : "Paused"}
+                </button>
+              }
+            />
+            <ParamSlider label="Retry count" value={cfg.retryCount} step={1} min={0} max={5} onChange={(v) => onChange({ retryCount: v })} integer />
+            <ParamSlider label="Timeout (ms)" value={cfg.timeoutMs} step={1000} min={5000} max={120000} onChange={(v) => onChange({ timeoutMs: v })} integer />
+            <ParamSlider label="Cost cap ($)" value={cfg.costCapUsd} step={0.01} min={0} max={10} onChange={(v) => onChange({ costCapUsd: v })} />
+          </PanelGroup>
         </div>
-      </Section>
-
-      <Section label="history">
-        <div className="text-[11px]">
-          {cfg.versions
-            .slice()
-            .reverse()
-            .map((v) => (
-              <div
-                key={v.version}
-                className="grid grid-cols-[50px_1fr_120px_90px_auto] gap-3 py-2 items-center"
-              >
-                <span className={v.version === prompt.currentVersion ? "text-foreground" : "text-muted-foreground"}>
-                  v{v.version}
-                </span>
-                <span className="text-muted-foreground truncate">{v.note}</span>
-                <span className="text-muted-foreground truncate">{v.author}</span>
-                <span className="text-muted-foreground">{v.date}</span>
-                <div className="flex gap-3 justify-end text-muted-foreground">
-                  <button className="">diff</button>
-                  <button className="">restore</button>
-                </div>
-              </div>
-            ))}
-        </div>
-      </Section>
-
-      <Section label="notes">
-        <textarea
-          value={cfg.notes}
-          onChange={(e) => onChange({ notes: e.target.value })}
-          rows={2}
-          placeholder="why this prompt exists, known edge cases, who to ping..."
-          className={taCls}
-        />
-      </Section>
-
-      <TestRun cfg={cfg} />
-    </div>
+      </aside>
+    </>
   );
 }
 
-const inCls =
-  "w-full bg-transparent border-0 border-b border-black/10 px-0 py-1  text-xs text-foreground focus:outline-none focus:border-foreground/60";
 const taCls =
-  "w-full bg-muted border border-border px-3 py-2  text-xs leading-relaxed text-foreground focus:outline-none focus:border-foreground/40 resize-y";
+  "w-full bg-muted border border-border rounded px-3 py-2 text-xs leading-relaxed text-foreground focus:outline-none focus:border-foreground/40 resize-y";
+const selCls =
+  "rounded border border-border bg-muted px-2 py-1 text-xs text-foreground focus:outline-none focus:border-foreground/40";
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <section className="py-6">
-      <h3 className="text-[10px] text-muted-foreground mb-4">
-        {label}
-      </h3>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
-}
-
-function Row({
+function Section({
   label,
   hint,
   children,
@@ -403,23 +482,72 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
-      <div className="pt-1.5">
-        <div className="text-[11px] text-muted-foreground">{label}</div>
-        {hint && <div className="text-[10px] text-muted-foreground mt-0.5">{hint}</div>}
+    <section className="py-5 border-t border-border first:border-t-0 first:pt-0">
+      <div className="mb-3">
+        <h3 className="text-sm font-medium text-foreground">{label}</h3>
+        {hint && <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>}
       </div>
-      <div>{children}</div>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-xs text-muted-foreground mb-1.5">
+        {label}
+        {hint && <span className="text-muted-foreground/70"> · {hint}</span>}
+      </label>
+      {children}
     </div>
   );
 }
 
-function NumRow({
+function PanelGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="py-4 border-t border-border first:border-t-0 first:pt-0">
+      <h4 className="text-[11px] uppercase tracking-wider text-muted-foreground mb-3">
+        {label}
+      </h4>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function PanelRow({
+  label,
+  value,
+  control,
+}: {
+  label: string;
+  value?: string;
+  control?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      {control ?? <span className="text-xs text-foreground truncate">{value}</span>}
+    </div>
+  );
+}
+
+function ParamSlider({
   label,
   value,
   min,
   max,
   step,
   onChange,
+  integer,
 }: {
   label: string;
   value: number;
@@ -427,19 +555,12 @@ function NumRow({
   max: number;
   step: number;
   onChange: (v: number) => void;
+  integer?: boolean;
 }) {
   return (
-    <Row label={label}>
-      <div className="grid grid-cols-[1fr_72px] gap-3 items-center">
-        <input
-          type="range"
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="w-full accent-foreground h-1"
-        />
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="text-xs text-muted-foreground">{label}</label>
         <input
           type="number"
           value={value}
@@ -447,10 +568,24 @@ function NumRow({
           max={max}
           step={step}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className="bg-transparent border-b border-black/10 text-xs text-foreground px-0 py-1 text-right focus:outline-none focus:border-foreground/60"
+          className="w-16 bg-transparent border-b border-border text-xs text-foreground px-0 py-0.5 text-right tabular-nums focus:outline-none focus:border-foreground/60"
         />
       </div>
-    </Row>
+      <input
+        type="range"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full accent-foreground h-1"
+        aria-label={label}
+      />
+      <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-0.5 tabular-nums">
+        <span>{integer ? min : min.toFixed(2)}</span>
+        <span>{integer ? max : max.toFixed(2)}</span>
+      </div>
+    </div>
   );
 }
 
@@ -464,16 +599,17 @@ function Segmented({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="inline-flex border border-black/10 rounded-lg overflow-hidden">
+    <div className="inline-flex border border-border rounded-lg overflow-hidden">
       {options.map((o) => (
         <button
           key={o}
           onClick={() => onChange(o)}
-          className={`px-3 py-1 text-[11px]  ${
-            value === o
-              ? "bg-foreground/10 text-foreground"
-              : "text-muted-foreground "
-          }`}
+          className={
+            "px-3 py-1.5 text-xs border-r border-border last:border-r-0 " +
+            (value === o
+              ? "bg-accent text-foreground font-medium"
+              : "text-muted-foreground hover:bg-accent/50")
+          }
         >
           {o}
         </button>
@@ -504,12 +640,10 @@ function TestRun({ cfg }: { cfg: PromptConfig }) {
     }, 500);
   };
   return (
-    <section className="py-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[10px] text-muted-foreground">
-          test run
-        </h3>
-        <span className="text-[10px] text-muted-foreground">
+    <section className="py-5 border-t border-border">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-foreground">Test run</h3>
+        <span className="text-[11px] text-muted-foreground tabular-nums">
           temp {cfg.temperature.toFixed(2)} · {cfg.maxTokens}t · est $0.003
         </span>
       </div>
@@ -517,24 +651,24 @@ function TestRun({ cfg }: { cfg: PromptConfig }) {
         value={input}
         onChange={(e) => setInput(e.target.value)}
         rows={4}
-        className={taCls}
+        className={taCls + " font-mono"}
       />
       <div className="flex items-center gap-3 mt-3">
         <button
           onClick={run}
           disabled={running}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-foreground border border-black/10 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded bg-foreground px-3 py-1.5 text-xs text-background disabled:opacity-50"
         >
-          {running ? "running…" : "run"}
+          {running ? "Running…" : "Run"}
         </button>
         {output && (
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground tabular-nums">
             completed in 487ms · $0.0028
           </span>
         )}
       </div>
       {output && (
-        <pre className="mt-3 bg-muted border border-border p-3 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+        <pre className="mt-3 bg-muted border border-border rounded p-3 text-xs leading-relaxed text-foreground whitespace-pre-wrap font-mono">
           {output}
         </pre>
       )}
