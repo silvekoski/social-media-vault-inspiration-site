@@ -140,6 +140,8 @@ function AccountPage() {
             <Row label="Browser push" control={<Switch />} />
           </Section>
 
+          <NtfySection />
+
           <Section
             title="Appearance"
             description="Personal display preferences for this account."
@@ -360,6 +362,113 @@ function SsoSection() {
         >
           Add provider
         </button>
+      )}
+    </Section>
+  );
+}
+
+function NtfySection() {
+  const [enabled, setEnabled] = useState(false);
+  const [server, setServer] = useState("https://ntfy.sh");
+  const [topic, setTopic] = useState("");
+  const [token, setToken] = useState("");
+  const [priority, setPriority] = useState("default");
+  const [testState, setTestState] = useState<"idle" | "sending" | "sent">("idle");
+
+  const canTest = Boolean(server.trim() && topic.trim());
+
+  const sendTest = () => {
+    if (!canTest) return;
+    setTestState("sending");
+    setTimeout(() => {
+      setTestState("sent");
+      setTimeout(() => setTestState("idle"), 1500);
+    }, 600);
+  };
+
+  return (
+    <Section
+      title="Push via ntfy"
+      description="Receive run and scraper alerts on your phone or desktop through ntfy. Subscribe to the same topic in the ntfy app to get notified."
+    >
+      <Row
+        label="Enable ntfy push"
+        hint="Send notifications to your ntfy topic."
+        control={<Switch checked={enabled} onCheckedChange={setEnabled} />}
+      />
+
+      {enabled && (
+        <div className="rounded border border-border p-4 space-y-4">
+          <Field
+            label="Server URL"
+            hint="Use https://ntfy.sh or your self-hosted server."
+          >
+            <Input
+              value={server}
+              onChange={(e) => setServer(e.target.value)}
+              placeholder="https://ntfy.sh"
+              className="text-sm"
+            />
+          </Field>
+          <Field
+            label="Topic"
+            hint="The topic name you subscribe to in the ntfy app. Choose something hard to guess."
+          >
+            <Input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="vault-alerts-7h2k9"
+              className="text-sm"
+            />
+          </Field>
+          <Field
+            label="Access token"
+            hint="Optional. Required only for protected topics or self-hosted servers."
+          >
+            <Input
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="tk_..."
+              className="text-sm"
+            />
+          </Field>
+          <Field label="Default priority">
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger className="w-[180px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="min">Min</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="max">Max (urgent)</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              disabled={!canTest}
+              className="rounded border border-border px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:hover:bg-transparent"
+            >
+              Save channel
+            </button>
+            <button
+              type="button"
+              onClick={sendTest}
+              disabled={!canTest || testState === "sending"}
+              className="text-sm underline text-muted-foreground disabled:opacity-50 disabled:no-underline"
+            >
+              {testState === "sending"
+                ? "Sending…"
+                : testState === "sent"
+                  ? "Test sent"
+                  : "Send test"}
+            </button>
+          </div>
+        </div>
       )}
     </Section>
   );
