@@ -15,7 +15,7 @@ import {
 export const Route = createFileRoute("/archive")({
   head: () => ({
     meta: [
-      { title: "Archive , Vault" },
+      { title: "Browse Data , Vault" },
       { name: "description", content: "Browse archived posts" },
     ],
   }),
@@ -141,7 +141,7 @@ function ArchivePage() {
       <header className="px-6 pt-6 pb-4">
         <div className="flex items-end justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Archive</h1>
+            <h1 className="text-xl font-semibold text-foreground">Browse Data</h1>
             <p className="text-xs text-muted-foreground mt-1">
               {fmtNum(filtered.length)} of{" "}
               {fmtNum(archivePosts.length)} posts

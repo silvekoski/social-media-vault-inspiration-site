@@ -111,15 +111,30 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const navItems = [
-  { to: "/", label: "Overview" },
-  { to: "/projects", label: "Projects" },
-  { to: "/creators", label: "Creators" },
-  { to: "/runs", label: "Runs" },
-  { to: "/archive", label: "Archive" },
-  { to: "/prompts", label: "Prompts" },
-  { to: "/media-specs", label: "Media Specs" },
-  { to: "/scrapers", label: "Scrapers" },
+const navGroups = [
+  {
+    heading: null,
+    items: [
+      { to: "/", label: "Overview" },
+      { to: "/projects", label: "Projects" },
+    ],
+  },
+  {
+    heading: "Project",
+    items: [
+      { to: "/runs", label: "Runs" },
+      { to: "/creators", label: "Creators" },
+      { to: "/archive", label: "Browse Data" },
+    ],
+  },
+  {
+    heading: "Organization",
+    items: [
+      { to: "/media-specs", label: "Media Specs" },
+      { to: "/scrapers", label: "Scrapers" },
+      { to: "/prompts", label: "Prompts" },
+    ],
+  },
 ];
 
 function GlobalCaptureBar() {
@@ -210,25 +225,33 @@ function Sidebar() {
             Vault-01
           </span>
         </div>
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = currentPath === item.to || currentPath.startsWith(item.to + "/");
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={
-                  "block px-3 py-2 text-sm " +
-                  (isActive
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground")
-                }
-              >
-                {item.label}
-              </Link>
-            );
-
-          })}
+        <nav className="space-y-6">
+          {navGroups.map((group, groupIndex) => (
+            <div key={group.heading ?? `group-${groupIndex}`} className="space-y-1">
+              {group.heading && (
+                <h2 className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {group.heading}
+                </h2>
+              )}
+              {group.items.map((item) => {
+                const isActive = currentPath === item.to || currentPath.startsWith(item.to + "/");
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={
+                      "block px-3 py-2 text-sm " +
+                      (isActive
+                        ? "text-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
       </div>
     </aside>
