@@ -39,72 +39,108 @@ function RunsPage() {
           </button>
         </div>
 
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="px-4 py-2 font-medium text-muted-foreground">Run ID</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Kind</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Platform</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Scraper</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Status</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Items</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Scraper Cost</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">AI Cost</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Started</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Duration</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground sr-only">Inspect</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {runs.map((run) => {
-              const sc = scraperById[run.scraperId];
-              const isSelected = selected?.id === run.id;
-              return (
-                <tr
-                  key={run.id}
-                  onClick={() => setSelected(run)}
-                  className={
-                    "group cursor-pointer hover:bg-accent/50 " +
-                    (isSelected ? "bg-accent" : "")
-                  }
-                >
-                  <td className="px-4 py-2 text-xs text-foreground">{run.id}</td>
-                  <td className="px-4 py-2 capitalize">{run.kind}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{run.platform ?? ","}</td>
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{sc?.name ?? run.scraperId}</span>
-                      <span className="text-[10px] text-muted-foreground">, {sc?.vendor}</span>
-                      {run.scraperFallbackFrom && (
-                        <span
-                          title={`fallback from ${scraperById[run.scraperFallbackFrom]?.name}`}
-                          className="text-[10px] text-muted-foreground"
-                        >
-                          fallback
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Run</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Scraper</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Items</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Cost</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Started</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Duration</th>
+                <th className="px-4 py-2.5 w-10">
+                  <span className="sr-only">Inspect</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {runs.map((run) => {
+                const sc = scraperById[run.scraperId];
+                const isSelected = selected?.id === run.id;
+                const aiCost = Object.values(run.aiCost).reduce((a, b) => a + b, 0);
+                const totalCost = run.scraperCost + aiCost;
+                return (
+                  <tr
+                    key={run.id}
+                    onClick={() => setSelected(run)}
+                    className={
+                      "group cursor-pointer transition-colors hover:bg-accent/50 " +
+                      (isSelected ? "bg-accent" : "")
+                    }
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="capitalize text-foreground font-medium">
+                          {run.kind}
+                          {run.platform ? (
+                            <span className="text-muted-foreground font-normal">
+                              {" · "}
+                              {run.platform}
+                            </span>
+                          ) : null}
                         </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2">
-                    <StatusBadge status={run.status} />
-                  </td>
-                  <td className="px-4 py-2 text-xs">{run.itemCount}</td>
-                  <td className="px-4 py-2 text-xs">${run.scraperCost.toFixed(2)}</td>
-                  <td className="px-4 py-2 text-xs">
-                    ${Object.values(run.aiCost).reduce((a, b) => a + b, 0).toFixed(2)}
-                  </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{fmtDate(run.startedAt)}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{durationLabel(run)}</td>
-                  <td className="px-4 py-2 text-right">
-                    <span className="text-xs underline text-muted-foreground group-hover:text-foreground">
-                      Inspect
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          {run.id}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={run.status} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="text-foreground flex items-center gap-1.5">
+                          {sc?.name ?? run.scraperId}
+                          {run.scraperFallbackFrom && (
+                            <span
+                              title={`Fell back from ${scraperById[run.scraperFallbackFrom]?.name ?? run.scraperFallbackFrom}`}
+                              className="rounded border border-border px-1 py-px text-[10px] uppercase tracking-wide text-muted-foreground"
+                            >
+                              fallback
+                            </span>
+                          )}
+                        </span>
+                        {sc?.vendor && (
+                          <span className="text-[11px] text-muted-foreground">{sc.vendor}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                      {run.itemCount.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="tabular-nums text-foreground">${totalCost.toFixed(2)}</span>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                          {`scraper $${run.scraperCost.toFixed(2)} · ai $${aiCost.toFixed(2)}`}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="text-foreground">{relativeTime(run.startedAt)}</span>
+                        <span className="text-[11px] text-muted-foreground">{fmtDate(run.startedAt)}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                      {durationLabel(run)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span
+                        aria-hidden="true"
+                        className="text-muted-foreground/50 group-hover:text-foreground"
+                      >
+                        ›
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {selected && (
@@ -115,7 +151,35 @@ function RunsPage() {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  return <span className="text-xs capitalize text-muted-foreground">{status}</span>;
+  const dot =
+    status === "success"
+      ? "bg-foreground"
+      : status === "error"
+        ? "bg-destructive"
+        : status === "running"
+          ? "bg-foreground/60 animate-pulse"
+          : "bg-muted-foreground/40";
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs capitalize text-foreground">
+      <span className={"h-2 w-2 rounded-full " + dot} aria-hidden="true" />
+      {status}
+    </span>
+  );
+}
+
+function relativeTime(iso: string) {
+  const then = new Date(iso).getTime();
+  const diff = Date.now() - then;
+  if (Number.isNaN(diff)) return "—";
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.round(days / 30);
+  return `${months}mo ago`;
 }
 
 type InspectTab = "dataset" | "log" | "info";
