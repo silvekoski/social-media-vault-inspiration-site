@@ -141,61 +141,30 @@ const navSections: NavSection[] = [
 ];
 
 function GlobalCaptureBar() {
-  const currentOrg = useCurrentOrg();
-  const projects = useProjectsForOrg();
-  const currentProjectId = useCurrentProjectId();
-
   return (
     <div className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background">
       <div className="flex items-center h-16 px-4 gap-4">
-        <div className="shrink-0 flex items-center gap-3">
-          <div className="w-20 h-9 rounded-lg bg-muted shrink-0 flex items-center justify-center" aria-label="Logo">
-            <span className="text-xs font-medium text-muted-foreground">VAULT</span>
+        <div className="w-60 shrink-0 flex items-center gap-2">
+          <div className="size-8 rounded-lg bg-foreground shrink-0 flex items-center justify-center" aria-label="Vault logo">
+            <span className="text-[10px] font-semibold text-background">V</span>
           </div>
-          <div className="relative inline-flex items-center">
-            <select
-              value={currentOrg.id}
-              onChange={(e) => setCurrentOrgId(e.target.value)}
-              className="appearance-none bg-transparent border border-border rounded-lg pl-3 pr-8 py-1.5 text-sm outline-none hover:bg-muted/40 cursor-pointer"
-              aria-label="Switch organization"
-            >
-              {organizations.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="size-3.5 absolute right-2 pointer-events-none text-muted-foreground" />
-          </div>
-          <span className="text-muted-foreground text-sm">/</span>
-          <div className="relative inline-flex items-center">
-            <select
-              value={currentProjectId}
-              onChange={(e) => setCurrentProjectId(currentOrg.id, e.target.value)}
-              className="appearance-none bg-transparent border border-border rounded-lg pl-3 pr-8 py-1.5 text-sm outline-none hover:bg-muted/40 cursor-pointer max-w-[200px] truncate"
-              aria-label="Switch project"
-            >
-              <option value="all">All projects</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="size-3.5 absolute right-2 pointer-events-none text-muted-foreground" />
-          </div>
+          <span className="text-sm font-semibold text-foreground">Vault</span>
         </div>
         <div className="flex-1 max-w-2xl mx-auto">
-          <div className="flex items-center gap-3">
-            <Search className="size-4 text-foreground shrink-0" />
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
+            <Search className="size-4 text-muted-foreground shrink-0" />
             <input
               type="text"
               placeholder="Paste TikTok or Instagram URL to archive"
               className="bg-transparent border-none outline-none w-full text-sm placeholder:text-muted-foreground"
             />
-            <div className="flex items-center gap-1.5 shrink-0 text-[10px] text-muted-foreground">
-              <span>CMD</span>
-              <span>K</span>
+            <div className="flex items-center gap-1 shrink-0 text-[10px] text-muted-foreground">
+              <kbd className="rounded border border-border px-1 py-px">⌘</kbd>
+              <kbd className="rounded border border-border px-1 py-px">K</kbd>
             </div>
           </div>
         </div>
-        <div className="w-48 shrink-0 flex items-center justify-end gap-4 text-sm">
+        <div className="w-60 shrink-0 flex items-center justify-end gap-4 text-sm">
           <ProfileMenu />
         </div>
       </div>
@@ -294,6 +263,44 @@ function ProfileMenu() {
   );
 }
 
+function WorkspaceSwitcher() {
+  const currentOrg = useCurrentOrg();
+  const projects = useProjectsForOrg();
+  const currentProjectId = useCurrentProjectId();
+
+  return (
+    <div className="mb-6 space-y-1.5">
+      <div className="relative inline-flex w-full items-center">
+        <select
+          value={currentOrg.id}
+          onChange={(e) => setCurrentOrgId(e.target.value)}
+          className="w-full appearance-none rounded-md border border-border bg-transparent pl-2.5 pr-8 py-1.5 text-sm font-medium text-foreground outline-none hover:bg-accent/50 cursor-pointer"
+          aria-label="Switch organization"
+        >
+          {organizations.map((o) => (
+            <option key={o.id} value={o.id}>{o.name}</option>
+          ))}
+        </select>
+        <ChevronDown className="size-3.5 absolute right-2.5 pointer-events-none text-muted-foreground" />
+      </div>
+      <div className="relative inline-flex w-full items-center">
+        <select
+          value={currentProjectId}
+          onChange={(e) => setCurrentProjectId(currentOrg.id, e.target.value)}
+          className="w-full appearance-none rounded-md border border-border bg-transparent pl-2.5 pr-8 py-1.5 text-xs text-muted-foreground outline-none hover:bg-accent/50 cursor-pointer"
+          aria-label="Switch project"
+        >
+          <option value="all">All projects</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+        <ChevronDown className="size-3.5 absolute right-2.5 pointer-events-none text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
 function Sidebar() {
   const currentPath = useRouterState({
     select: (s) => s.location.pathname,
@@ -305,9 +312,7 @@ function Sidebar() {
   return (
     <aside className="w-64 border-r border-border flex flex-col shrink-0 h-[calc(100vh-4rem)] overflow-hidden">
       <div className="p-4">
-        <div className="mb-6 px-2">
-          <span className="text-xs font-semibold text-foreground">Vault-01</span>
-        </div>
+        <WorkspaceSwitcher />
         <nav className="space-y-6">
           {navSections.map((section, sectionIndex) => (
             <div key={section.heading ?? `section-${sectionIndex}`} className="space-y-1">
