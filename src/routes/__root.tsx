@@ -270,7 +270,7 @@ function ProfileMenu() {
             Settings
           </Link>
           <Link
-            to="/settings"
+            to="/account"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
