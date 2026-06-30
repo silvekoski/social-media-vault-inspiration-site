@@ -31,7 +31,7 @@ function RunsPage() {
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Run History</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Discovery, engagement, and capture runs
+              Discovery, engagement, and capture runs. Select a row to inspect its output.
             </p>
           </div>
           <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded hover:bg-primary/90">
@@ -52,6 +52,7 @@ function RunsPage() {
               <th className="px-4 py-2 font-medium text-muted-foreground">AI Cost</th>
               <th className="px-4 py-2 font-medium text-muted-foreground">Started</th>
               <th className="px-4 py-2 font-medium text-muted-foreground">Duration</th>
+              <th className="px-4 py-2 font-medium text-muted-foreground sr-only">Inspect</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -94,6 +95,11 @@ function RunsPage() {
                   </td>
                   <td className="px-4 py-2 text-xs text-muted-foreground">{fmtDate(run.startedAt)}</td>
                   <td className="px-4 py-2 text-xs text-muted-foreground">{durationLabel(run)}</td>
+                  <td className="px-4 py-2 text-right">
+                    <span className="text-xs underline text-muted-foreground group-hover:text-foreground">
+                      Inspect
+                    </span>
+                  </td>
                 </tr>
               );
             })}
