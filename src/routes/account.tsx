@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -78,21 +79,7 @@ function AccountPage() {
 
           <Divider />
 
-          <Section
-            title="Connected accounts"
-            description="Link a provider to enable single sign-on for your account."
-          >
-            <Row
-              label="Google"
-              hint="Sign in with your Google account."
-              control={<button className="text-sm underline">Connect</button>}
-            />
-            <Row
-              label="GitHub"
-              hint="Connected as veikka"
-              control={<button className="text-sm underline">Disconnect</button>}
-            />
-          </Section>
+          <SsoSection />
 
           <Divider />
 
@@ -129,6 +116,195 @@ function AccountPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+type SsoProvider = {
+  id: string;
+  name: string;
+  issuer: string;
+  enabled: boolean;
+};
+
+const REDIRECT_URL = "https://app.vault.app/auth/sso/callback";
+
+function SsoSection() {
+  const [providers, setProviders] = useState<SsoProvider[]>([
+    {
+      id: "pocket-id",
+      name: "Pocket ID",
+      issuer: "https://id.example.com",
+      enabled: true,
+    },
+  ]);
+  const [adding, setAdding] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    issuer: "",
+    clientId: "",
+    clientSecret: "",
+  });
+
+  const updateForm = (key: keyof typeof form, value: string) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const resetForm = () => {
+    setForm({ name: "", issuer: "", clientId: "", clientSecret: "" });
+    setAdding(false);
+  };
+
+  const canSave = form.name.trim() && form.issuer.trim() && form.clientId.trim();
+
+  const handleSave = () => {
+    if (!canSave) return;
+    setProviders((prev) => [
+      ...prev,
+      {
+        id: `${form.name.toLowerCase().replace(/\s+/g, "-")}-${prev.length}`,
+        name: form.name.trim(),
+        issuer: form.issuer.trim(),
+        enabled: true,
+      },
+    ]);
+    resetForm();
+  };
+
+  const toggleProvider = (id: string) =>
+    setProviders((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)),
+    );
+
+  const removeProvider = (id: string) =>
+    setProviders((prev) => prev.filter((p) => p.id !== id));
+
+  const copyRedirect = async () => {
+    try {
+      await navigator.clipboard.writeText(REDIRECT_URL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <Section
+      title="Single sign-on (SSO)"
+      description="Connect an OpenID Connect (OIDC) provider such as Pocket ID, Authentik, or Keycloak to sign in to Vault."
+    >
+      <Field
+        label="Redirect URL"
+        hint="Add this callback URL to your provider's allowed redirect URLs."
+      >
+        <div className="flex items-center gap-2">
+          <Input readOnly value={REDIRECT_URL} className="text-sm" />
+          <button
+            type="button"
+            onClick={copyRedirect}
+            className="shrink-0 rounded border border-border px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      </Field>
+
+      <div className="space-y-1">
+        {providers.length === 0 && (
+          <p className="text-sm text-muted-foreground py-1">
+            No identity providers connected yet.
+          </p>
+        )}
+        {providers.map((p) => (
+          <Row
+            key={p.id}
+            label={p.name}
+            hint={`${p.issuer} · ${p.enabled ? "Enabled" : "Disabled"}`}
+            control={
+              <div className="flex items-center gap-4">
+                <Switch
+                  checked={p.enabled}
+                  onCheckedChange={() => toggleProvider(p.id)}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeProvider(p.id)}
+                  className="text-sm underline text-destructive"
+                >
+                  Remove
+                </button>
+              </div>
+            }
+          />
+        ))}
+      </div>
+
+      {adding ? (
+        <div className="rounded border border-border p-4 space-y-4">
+          <Field label="Display name" hint="Shown on the sign-in button.">
+            <Input
+              value={form.name}
+              onChange={(e) => updateForm("name", e.target.value)}
+              placeholder="Pocket ID"
+              className="text-sm"
+            />
+          </Field>
+          <Field
+            label="Issuer URL"
+            hint="The provider's OIDC discovery URL, e.g. https://id.example.com/.well-known/openid-configuration"
+          >
+            <Input
+              value={form.issuer}
+              onChange={(e) => updateForm("issuer", e.target.value)}
+              placeholder="https://id.example.com"
+              className="text-sm"
+            />
+          </Field>
+          <Field label="Client ID">
+            <Input
+              value={form.clientId}
+              onChange={(e) => updateForm("clientId", e.target.value)}
+              placeholder="Paste your client ID"
+              className="text-sm"
+            />
+          </Field>
+          <Field label="Client secret" hint="Stored encrypted. Leave blank for public clients.">
+            <Input
+              type="password"
+              value={form.clientSecret}
+              onChange={(e) => updateForm("clientSecret", e.target.value)}
+              placeholder="Paste your client secret"
+              className="text-sm"
+            />
+          </Field>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!canSave}
+              className="rounded border border-border px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:hover:bg-transparent"
+            >
+              Save provider
+            </button>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-sm underline text-muted-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="text-sm underline text-foreground w-fit"
+        >
+          Add provider
+        </button>
+      )}
+    </Section>
   );
 }
 
