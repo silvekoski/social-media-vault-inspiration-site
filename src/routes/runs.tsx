@@ -91,12 +91,12 @@ function RunsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
-                        <span className="text-foreground flex items-center gap-1.5">
+                        <span className="text-foreground flex items-center gap-1.5 whitespace-nowrap">
                           {sc?.name ?? run.scraperId}
                           {run.scraperFallbackFrom && (
                             <span
                               title={`Fell back from ${scraperById[run.scraperFallbackFrom]?.name ?? run.scraperFallbackFrom}`}
-                              className="rounded border border-border px-1 py-px text-[10px] uppercase tracking-wide text-muted-foreground"
+                              className="shrink-0 rounded border border-border px-1 py-px text-[10px] uppercase tracking-wide text-muted-foreground"
                             >
                               fallback
                             </span>
