@@ -134,6 +134,12 @@ function RunInspector({ run, onClose }: { run: Run; onClose: () => void }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Reset to the output tab when switching between runs (providers expose different tabs).
+  useEffect(() => {
+    setTab("dataset");
+    setLogFilter("all");
+  }, [run.id]);
+
   const logLines =
     logFilter === "all"
       ? artifacts.log
@@ -150,7 +156,7 @@ function RunInspector({ run, onClose }: { run: Run; onClose: () => void }) {
         <div className="flex items-start justify-between gap-4 border-b border-border p-5">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
-              {run.kind} run
+              {run.kind} run · {sc?.vendor ?? "scraper"} {artifacts.objectLabel}
             </p>
             <h2 className="text-lg font-semibold text-foreground truncate">
               {runTitle(run)}
@@ -175,7 +181,7 @@ function RunInspector({ run, onClose }: { run: Run; onClose: () => void }) {
           <div>
             <h3 className="text-sm font-medium text-foreground mb-3">Run details</h3>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Detail label="Status" value={<span className="capitalize">{run.status}</span>} />
+              <Detail label="Status" value={artifacts.statusLabel} />
               <Detail label="Run ID" value={run.id} />
               <Detail label="Started" value={fmtDate(run.startedAt)} />
               <Detail label="Finished" value={run.finishedAt ? fmtDate(run.finishedAt) : "—"} />
@@ -194,46 +200,70 @@ function RunInspector({ run, onClose }: { run: Run; onClose: () => void }) {
           <div>
             <h3 className="text-sm font-medium text-foreground mb-3">Statistics</h3>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <Detail label="Dataset items" value={run.itemCount.toLocaleString()} />
-              <Detail label="Compute units" value={artifacts.computeUnits.toFixed(3)} />
-              <Detail label="Avg memory" value={`${artifacts.memAvgMb} MB`} />
-              <Detail label="Run time" value={`${artifacts.runTimeSecs}s`} />
-              <Detail label="Scraper cost" value={`$${run.scraperCost.toFixed(2)}`} />
-              <Detail
-                label="AI cost"
-                value={`$${Object.values(run.aiCost).reduce((a, b) => a + b, 0).toFixed(2)}`}
-              />
+              {artifacts.stats.map((s) => (
+                <Detail key={s.label} label={s.label} value={s.value} />
+              ))}
             </dl>
           </div>
 
-          {/* Storage */}
+          {/* Storage / Delivery */}
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">Storage</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              {artifacts.provider === "brightdata" ? "Snapshot & delivery" : "Storage"}
+            </h3>
             <div className="space-y-2">
-              <CopyRow label="Default dataset" value={artifacts.datasetId} />
-              <CopyRow label="Key-value store" value={artifacts.keyValueStoreId} />
-              <CopyRow label="Request queue" value={artifacts.requestQueueId} />
+              {artifacts.storage.map((s) =>
+                s.copy ? (
+                  <CopyRow key={s.label} label={s.label} value={s.value} />
+                ) : (
+                  <div
+                    key={s.label}
+                    className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2"
+                  >
+                    <span className="text-xs text-muted-foreground">{s.label}</span>
+                    <span className="text-sm text-foreground truncate">{s.value}</span>
+                  </div>
+                ),
+              )}
             </div>
+            {artifacts.delivery && (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground">Delivery</div>
+                  <div className="text-sm text-foreground truncate">
+                    {artifacts.delivery.format} · {artifacts.delivery.destination}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs underline text-muted-foreground hover:text-foreground"
+                >
+                  Download
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
           <div>
             <div className="flex items-center gap-1 border-b border-border">
-              {(["dataset", "log", "info"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTab(t)}
-                  className={
-                    "px-3 py-2 text-sm capitalize -mb-px border-b-2 " +
-                    (tab === t
-                      ? "border-foreground text-foreground font-medium"
-                      : "border-transparent text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  {t === "dataset" ? `Dataset (${run.itemCount})` : t}
-                </button>
-              ))}
+              {(["dataset", "log", "info"] as const)
+                .filter((t) => t !== "log" || artifacts.hasLog)
+                .map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTab(t)}
+                    className={
+                      "px-3 py-2 text-sm capitalize -mb-px border-b-2 " +
+                      (tab === t
+                        ? "border-foreground text-foreground font-medium"
+                        : "border-transparent text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    {t === "dataset" ? `${artifacts.outputLabel} (${run.itemCount})` : t}
+                  </button>
+                ))}
             </div>
 
             <div className="pt-4">
@@ -279,12 +309,13 @@ function RunInspector({ run, onClose }: { run: Run; onClose: () => void }) {
               )}
               {tab === "info" && (
                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                  <Detail label="Actor" value={sc?.name ?? run.scraperId} />
-                  <Detail label="Vendor" value={sc?.vendor ?? "—"} />
+                  <Detail label="Provider" value={sc?.vendor ?? "—"} />
+                  <Detail label="Run object" value={artifacts.objectLabel} />
                   <Detail label="Platform" value={run.platform ?? "—"} />
                   <Detail label="Kind" value={<span className="capitalize">{run.kind}</span>} />
-                  <Detail label="Build" value={artifacts.build} />
-                  <Detail label="Exit code" value={run.status === "success" ? "0" : run.status === "error" ? "1" : "—"} />
+                  {artifacts.info.map((f) => (
+                    <Detail key={f.label} label={f.label} value={f.value} />
+                  ))}
                 </dl>
               )}
             </div>
