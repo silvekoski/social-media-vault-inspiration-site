@@ -12,4 +12,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Allow the v0/proxied preview hostnames to reach the dev server.
+  // Without this, Vite returns 403 "Blocked request. This host is not allowed".
+  vite: {
+    server: {
+      allowedHosts: true,
+    },
+  },
 });
