@@ -22,10 +22,10 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-type Scope = "personal" | "organization" | "workspace";
+type Scope = "organization" | "workspace";
 
 function SettingsPage() {
-  const [scope, setScope] = useState<Scope>("personal");
+  const [scope, setScope] = useState<Scope>("organization");
   const org = useCurrentOrg();
 
   return (
@@ -35,7 +35,6 @@ function SettingsPage() {
 
         <div className="flex gap-6 text-sm mb-8 border-b border-border">
           {([
-            ["personal", "Personal"],
             ["organization", `Organization · ${org.name}`],
             ["workspace", "Workspace"],
           ] as const).map(([key, label]) => (
@@ -53,7 +52,6 @@ function SettingsPage() {
           ))}
         </div>
 
-        {scope === "personal" && <PersonalSettings />}
         {scope === "organization" && <OrganizationSettings orgName={org.name} />}
         {scope === "workspace" && <WorkspaceSettings />}
       </div>
@@ -86,100 +84,6 @@ function Row({
         {hint && <div className="text-xs text-muted-foreground">{hint}</div>}
       </div>
       <div className="shrink-0">{control}</div>
-    </div>
-  );
-}
-
-function PersonalSettings() {
-  return (
-    <div className="space-y-10">
-      <Section title="Profile">
-        <div>
-          <div className="text-sm text-foreground mb-1.5">Display name</div>
-          <Input defaultValue="Alex Morgan" className="text-sm" />
-        </div>
-        <div>
-          <div className="text-sm text-foreground mb-1.5">Email</div>
-          <Input type="email" defaultValue="alex@vault.local" className="text-sm" />
-        </div>
-        <div>
-          <div className="text-sm text-foreground mb-1.5">Handle</div>
-          <Input defaultValue="alex" className="text-sm" />
-        </div>
-        <Row label="Timezone" control={<span className="text-sm text-muted-foreground">UTC</span>} />
-        <Row label="Time format" control={<span className="text-sm text-muted-foreground">24h</span>} />
-      </Section>
-
-      <Section title="Security">
-        <Row
-          label="Two-factor authentication"
-          hint="Authenticator app"
-          control={<Switch defaultChecked />}
-        />
-        <Row
-          label="Session timeout"
-          hint="Sign out after inactivity"
-          control={<span className="text-sm text-muted-foreground">30 days</span>}
-        />
-        <div>
-          <div className="text-sm text-foreground mb-1.5">Change password</div>
-          <Input type="password" placeholder="New password" className="text-sm" />
-        </div>
-        <Row
-          label="Active sessions"
-          control={<button className="text-sm underline">Manage (3)</button>}
-        />
-      </Section>
-
-      <Section title="Personal API tokens">
-        <div>
-          <div className="text-sm text-foreground mb-1.5">CLI token</div>
-          <Input
-            type="password"
-            defaultValue="vlt_pat_user_a1b2c3d4e5f6"
-            className="text-sm"
-          />
-        </div>
-        <Row
-          label="Rotate token"
-          control={<button className="text-sm underline">Generate new</button>}
-        />
-      </Section>
-
-      <Section title="Notifications">
-        <Row label="Email · run failures" control={<Switch defaultChecked />} />
-        <Row label="Email · weekly digest" control={<Switch />} />
-        <Row label="Email · mentions in projects" control={<Switch defaultChecked />} />
-        <Row label="Browser push" control={<Switch />} />
-      </Section>
-
-      <Section title="Appearance">
-        <Row
-          label="Theme"
-          control={
-            <Select defaultValue="system">
-              <SelectTrigger className="w-[160px] text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="system">System</SelectItem>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-              </SelectContent>
-            </Select>
-          }
-        />
-        <Row label="Compact density" control={<Switch defaultChecked />} />
-        <Row label="Reduce motion" control={<Switch />} />
-      </Section>
-
-      <Section title="Danger zone">
-        <Row
-          label="Delete account"
-          hint="Removes your user and revokes all tokens"
-          control={<button className="text-sm underline text-destructive">Delete</button>}
-        />
-      </Section>
     </div>
   );
 }

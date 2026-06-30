@@ -2,6 +2,13 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -54,6 +61,8 @@ function AccountPage() {
             <Field label="Handle" hint="Used in mentions across projects.">
               <Input defaultValue={account.handle} className="text-sm" />
             </Field>
+            <Row label="Timezone" control={<span className="text-sm text-muted-foreground">UTC</span>} />
+            <Row label="Time format" control={<span className="text-sm text-muted-foreground">24h</span>} />
           </Section>
 
           <Section
@@ -72,6 +81,11 @@ function AccountPage() {
               label="Two-factor authentication"
               hint="Authenticator app"
               control={<Switch defaultChecked />}
+            />
+            <Row
+              label="Session timeout"
+              hint="Sign out after inactivity"
+              control={<span className="text-sm text-muted-foreground">30 days</span>}
             />
           </Section>
 
@@ -96,6 +110,57 @@ function AccountPage() {
               hint="Ends all sessions except this one."
               control={<button className="text-sm underline">Sign out all</button>}
             />
+          </Section>
+
+          <Section
+            title="Personal API tokens"
+            description="Tokens authenticate the CLI and scripts as you."
+          >
+            <Field label="CLI token">
+              <Input
+                type="password"
+                defaultValue="vlt_pat_user_a1b2c3d4e5f6"
+                className="text-sm"
+              />
+            </Field>
+            <Row
+              label="Rotate token"
+              hint="Revokes the current token and issues a new one."
+              control={<button className="text-sm underline">Generate new</button>}
+            />
+          </Section>
+
+          <Section
+            title="Notifications"
+            description="Choose how Vault contacts you."
+          >
+            <Row label="Email · run failures" control={<Switch defaultChecked />} />
+            <Row label="Email · weekly digest" control={<Switch />} />
+            <Row label="Email · mentions in projects" control={<Switch defaultChecked />} />
+            <Row label="Browser push" control={<Switch />} />
+          </Section>
+
+          <Section
+            title="Appearance"
+            description="Personal display preferences for this account."
+          >
+            <Row
+              label="Theme"
+              control={
+                <Select defaultValue="system">
+                  <SelectTrigger className="w-[160px] text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+              }
+            />
+            <Row label="Compact density" control={<Switch defaultChecked />} />
+            <Row label="Reduce motion" control={<Switch />} />
           </Section>
 
           <Section title="Danger zone">
