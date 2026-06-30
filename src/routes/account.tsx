@@ -36,7 +36,7 @@ function AccountPage() {
           Manage your profile, login details, and personal preferences.
         </p>
 
-        <div className="mt-8 space-y-10">
+        <div className="mt-8 divide-y divide-border [&>*]:py-10 first:[&>*]:pt-0 last:[&>*]:pb-0">
           <Section
             title="Your profile"
             description="This information is visible to other members of your organization."
