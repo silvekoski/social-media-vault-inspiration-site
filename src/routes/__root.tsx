@@ -8,7 +8,7 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -112,33 +112,30 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 type NavLink = { to: string; label: string };
-type NavSection =
-  | { type: "link"; to: string; label: string }
-  | { type: "group"; key: string; label: string; scope: string; items: NavLink[] };
+type NavSection = { heading: string | null; items: NavLink[] };
 
 const navSections: NavSection[] = [
-  { type: "link", to: "/", label: "Overview" },
-  { type: "link", to: "/projects", label: "Projects" },
   {
-    type: "group",
-    key: "project",
-    label: "Project",
-    scope: "Project-specific",
+    heading: null,
     items: [
-      { to: "/runs", label: "Runs" },
-      { to: "/creators", label: "Creators" },
-      { to: "/archive", label: "Browse Data" },
+      { to: "/", label: "Overview" },
+      { to: "/projects", label: "Projects" },
     ],
   },
   {
-    type: "group",
-    key: "organization",
-    label: "Organization",
-    scope: "Organization-wide",
+    heading: "Organization",
     items: [
       { to: "/media-specs", label: "Media Specs" },
       { to: "/scrapers", label: "Scrapers" },
       { to: "/prompts", label: "Prompts" },
+    ],
+  },
+  {
+    heading: "Project",
+    items: [
+      { to: "/runs", label: "Runs" },
+      { to: "/creators", label: "Creators" },
+      { to: "/archive", label: "Browse Data" },
     ],
   },
 ];
@@ -226,89 +223,39 @@ function Sidebar() {
   const isLinkActive = (to: string) =>
     currentPath === to || (to !== "/" && currentPath.startsWith(to + "/"));
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    project: true,
-    organization: true,
-  });
-
-  const toggleGroup = (key: string) =>
-    setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
-
   return (
     <aside className="w-64 border-r border-border flex flex-col shrink-0 h-[calc(100vh-4rem)] overflow-hidden">
       <div className="p-4">
         <div className="mb-6 px-2">
           <span className="text-xs font-semibold text-foreground">Vault-01</span>
         </div>
-        <nav className="space-y-1">
-          {navSections.map((section) => {
-            if (section.type === "link") {
-              const active = isLinkActive(section.to);
-              return (
-                <Link
-                  key={section.to}
-                  to={section.to}
-                  className={
-                    "flex items-center rounded-md px-3 py-2 text-sm " +
-                    (active
-                      ? "bg-accent text-accent-foreground font-medium"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground")
-                  }
-                >
-                  {section.label}
-                </Link>
-              );
-            }
-
-            const isOpen = openGroups[section.key];
-            const groupActive = section.items.some((i) => isLinkActive(i.to));
-            return (
-              <div key={section.key} className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(section.key)}
-                  aria-expanded={isOpen}
-                  className={
-                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm " +
-                    (groupActive
-                      ? "text-foreground font-medium"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  <span className="flex-1 text-left">{section.label}</span>
-                  <ChevronDown
+        <nav className="space-y-6">
+          {navSections.map((section, sectionIndex) => (
+            <div key={section.heading ?? `section-${sectionIndex}`} className="space-y-1">
+              {section.heading && (
+                <h2 className="px-3 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                  {section.heading}
+                </h2>
+              )}
+              {section.items.map((item) => {
+                const active = isLinkActive(item.to);
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
                     className={
-                      "size-4 shrink-0 transition-transform " + (isOpen ? "" : "-rotate-90")
+                      "flex items-center rounded-md px-3 py-2 text-sm " +
+                      (active
+                        ? "bg-accent text-accent-foreground font-medium"
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground")
                     }
-                  />
-                </button>
-                <p className="px-3 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                  {section.scope}
-                </p>
-                {isOpen && (
-                  <div className="mt-1 ml-5 flex flex-col border-l border-border pl-3">
-                    {section.items.map((item) => {
-                      const active = isLinkActive(item.to);
-                      return (
-                        <Link
-                          key={item.to}
-                          to={item.to}
-                          className={
-                            "rounded-md px-3 py-1.5 text-sm " +
-                            (active
-                              ? "bg-accent text-accent-foreground font-medium"
-                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground")
-                          }
-                        >
-                          {item.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
       </div>
     </aside>
