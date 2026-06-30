@@ -26,54 +26,65 @@ function CreatorsPage() {
           </button>
         </div>
 
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-black/5">
-              <th className="px-4 py-2 font-medium text-muted-foreground"></th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Platform</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Username</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Display Name</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Followers</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Posts</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Watched</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Active</th>
-              <th className="px-4 py-2 font-medium text-muted-foreground">Discovered</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-black/5">
-            {creators.map((c) => (
-              <tr key={c.id} className="">
-                <td className="pl-4 pr-0 py-2">
-                  <img
-                    src={`https://picsum.photos/seed/${c.username}/64/64?grayscale`}
-                    alt=""
-                    className="h-8 w-8 object-cover bg-muted rounded-lg"
-                    loading="lazy"
-                  />
-                </td>
-                <td className="px-4 py-2">
-                  <span className="text-[10px] text-muted-foreground">
-                    {c.platform}
-                  </span>
-                </td>
-                <td className="px-4 py-2 text-xs">@{c.username}</td>
-                <td className="px-4 py-2">{c.displayName}</td>
-                <td className="px-4 py-2 text-xs">{fmtNumber(c.followers)}</td>
-                <td className="px-4 py-2 text-xs">{c.postCount}</td>
-                <td className="px-4 py-2">
-                  {c.watched ? "Yes" : "No"}
-                </td>
-                <td className="px-4 py-2">
-                  {c.active ? "Yes" : "No"}
-                </td>
-                <td className="px-4 py-2 text-xs text-muted-foreground">{c.discoveredVia}</td>
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Creator</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Platform</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Followers</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Posts</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Discovered</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {creators.map((c) => (
+                <tr key={c.id} className="group transition-colors hover:bg-accent/50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={`https://picsum.photos/seed/${c.username}/64/64?grayscale`}
+                        alt=""
+                        className="h-8 w-8 shrink-0 object-cover bg-muted rounded-lg"
+                        loading="lazy"
+                      />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-foreground font-medium truncate">{c.displayName}</span>
+                        <span className="font-mono text-[11px] text-muted-foreground truncate">@{c.username}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 capitalize text-muted-foreground">{c.platform}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">{fmtNumber(c.followers)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">{c.postCount.toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <ActiveBadge active={c.active} watched={c.watched} />
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{c.discoveredVia}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
       </div>
     </section>
+  );
+}
+
+function ActiveBadge({ active, watched }: { active: boolean; watched: boolean }) {
+  const label = !watched ? "Unwatched" : active ? "Active" : "Paused";
+  const dot = !watched
+    ? "bg-muted-foreground/40"
+    : active
+      ? "bg-foreground"
+      : "bg-muted-foreground/60";
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
+      <span className={"h-2 w-2 rounded-full " + dot} aria-hidden="true" />
+      {label}
+    </span>
   );
 }
 
