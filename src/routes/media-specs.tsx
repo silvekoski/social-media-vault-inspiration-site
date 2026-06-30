@@ -138,6 +138,98 @@ function Panel({
   );
 }
 
+const STACK_SHADES = [
+  "bg-foreground",
+  "bg-foreground/70",
+  "bg-foreground/50",
+  "bg-foreground/35",
+  "bg-foreground/25",
+  "bg-foreground/15",
+  "bg-foreground/10",
+];
+
+function StackedBar({
+  title,
+  subtitle,
+  rows,
+  total,
+  maxSegments = 6,
+}: {
+  title: string;
+  subtitle?: string;
+  rows: Array<{ label: string; count: number }>;
+  total: number;
+  maxSegments?: number;
+}) {
+  // Collapse the long tail into a single "Other" segment so the bar stays readable.
+  const sorted = [...rows].sort((a, b) => b.count - a.count);
+  const head = sorted.slice(0, maxSegments);
+  const tail = sorted.slice(maxSegments);
+  const segments =
+    tail.length > 0
+      ? [
+          ...head,
+          { label: "Other", count: tail.reduce((acc, r) => acc + r.count, 0) },
+        ]
+      : head;
+
+  return (
+    <div className="py-5">
+      <div className="flex items-baseline justify-between mb-2.5">
+        <div>
+          <h3 className="text-sm font-medium text-foreground">{title}</h3>
+          {subtitle && (
+            <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        <span className="text-[11px] text-muted-foreground">n={fmtNum(total)}</span>
+      </div>
+
+      {segments.length === 0 ? (
+        <div className="text-xs text-muted-foreground py-2">No data</div>
+      ) : (
+        <>
+          <div className="flex h-6 w-full overflow-hidden rounded border border-border">
+            {segments.map((s, i) => {
+              const pct = total ? (s.count / total) * 100 : 0;
+              return (
+                <div
+                  key={s.label}
+                  className={
+                    STACK_SHADES[i % STACK_SHADES.length] +
+                    (i > 0 ? " border-l border-background" : "")
+                  }
+                  style={{ width: `${pct}%` }}
+                  title={`${s.label} · ${pct.toFixed(1)}%`}
+                />
+              );
+            })}
+          </div>
+          <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1">
+            {segments.map((s, i) => {
+              const pct = total ? (s.count / total) * 100 : 0;
+              return (
+                <div key={s.label} className="flex items-center gap-2 min-w-0">
+                  <span
+                    className={
+                      "h-2.5 w-2.5 shrink-0 rounded-sm " +
+                      STACK_SHADES[i % STACK_SHADES.length]
+                    }
+                  />
+                  <span className="text-xs text-foreground truncate">{s.label}</span>
+                  <span className="ml-auto text-[11px] text-muted-foreground tabular-nums shrink-0">
+                    {pct.toFixed(1)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div>
@@ -553,27 +645,24 @@ function MediaSpecsPage() {
               </p>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10">
                 <div>
-                  <Panel
+                  <StackedBar
                     title="Capture device"
                     subtitle="device.model"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(subs, (s) => s.device.model)}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Operating system"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(subs, (s) => s.device.os)}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Network connection"
                     subtitle="at upload time"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(subs, (s) => s.network.connection)}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Uplink speed"
                     subtitle="measured at submit"
                     total={subs.length}
@@ -584,16 +673,14 @@ function MediaSpecsPage() {
                       { label: "30–60 Mb/s", min: 30, max: 60 },
                       { label: "≥ 60 Mb/s", min: 60, max: Infinity },
                     ])}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Capture dynamic range"
                     subtitle="original.hdr"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(subs, (s) => s.original.hdr)}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Scraper used"
                     subtitle="retrieved the delivery"
                     total={subs.length}
@@ -601,20 +688,18 @@ function MediaSpecsPage() {
                       subs,
                       (s) => scraperById[s.scraperId]?.name ?? s.scraperId,
                     )}
-                    mono
                   />
                 </div>
                 <div>
-                  <Panel
+                  <StackedBar
                     title="Original codec"
                     subtitle="as uploaded"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(subs, (s) =>
                       s.original.videoCodec.toUpperCase(),
                     )}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Original resolution"
                     subtitle="capture width × height"
                     total={subs.length}
@@ -622,25 +707,22 @@ function MediaSpecsPage() {
                       subs,
                       (s) => `${s.original.width}×${s.original.height}`,
                     )}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Original frame rate"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(
                       subs,
                       (s) => `${s.original.frameRate} fps`,
                     )}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Platform transcode verdict"
                     subtitle="upload → delivery"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(subs, (s) => s.verdict)}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Bitrate retained"
                     subtitle="delivered ÷ original"
                     total={subs.length}
@@ -655,16 +737,14 @@ function MediaSpecsPage() {
                         { label: "≥ 60%", min: 60, max: Infinity },
                       ],
                     )}
-                    mono
                   />
-                  <Panel
+                  <StackedBar
                     title="Data sharing"
                     subtitle="operator opt-in"
                     total={subs.length}
                     rows={bucket<UploadSubmission, string>(subs, (s) =>
                       s.shared ? "Shared with maintainer" : "Private / self-hosted",
                     )}
-                    mono
                   />
                 </div>
               </div>
