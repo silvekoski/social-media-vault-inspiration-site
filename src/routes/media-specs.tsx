@@ -7,6 +7,7 @@ import {
   type ContentFormat,
 } from "../lib/mock-media-specs";
 import { fmtNum } from "../lib/date";
+import { UploadAnalysisView } from "../components/upload-analysis";
 
 export const Route = createFileRoute("/media-specs")({
   head: () => ({
@@ -189,6 +190,7 @@ function median(arr: number[]): number {
 
 function MediaSpecsPage() {
   const all = useMemo(() => getMediaSpecs(), []);
+  const [view, setView] = useState<"distributions" | "uploads">("distributions");
   const [platform, setPlatform] = useState<PlatformFilter>("all");
   const [format, setFormat] = useState<FormatFilter>("all");
 
@@ -255,16 +257,43 @@ function MediaSpecsPage() {
       <header className="px-6 pt-6 pb-4">
         <div className="mb-4">
           <h1 className="text-lg font-medium flex items-center gap-2">
-            
             Media Specs
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Technical metadata distributions across {fmtNum(all.length)} archived assets.
-            Compare encoding parameters between platforms and content formats to inform delivery defaults.
+            {view === "distributions"
+              ? `Technical metadata distributions across ${fmtNum(all.length)} archived assets. Compare encoding parameters between platforms and content formats to inform delivery defaults.`
+              : "Compare what creators uploaded against what the platform delivered and Vault scraped back, with device and network context for each TikTok post."}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+        <div className="flex items-center gap-1 border-b border-border mb-4 -mt-1">
+          {(
+            [
+              ["distributions", "Distributions"],
+              ["uploads", "Upload analysis"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setView(key)}
+              className={
+                "px-3 py-2 text-sm -mb-px border-b-2 " +
+                (view === key
+                  ? "border-foreground text-foreground font-medium"
+                  : "border-transparent text-muted-foreground hover:text-foreground")
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          className={
+            "flex flex-wrap items-center gap-x-6 gap-y-2 text-xs " +
+            (view === "uploads" ? "hidden" : "")
+          }
+        >
           <FilterRow
             label="PLATFORM"
             options={(["all", "tiktok", "instagram", "youtube"] as PlatformFilter[]).map((p) => ({
@@ -304,6 +333,10 @@ function MediaSpecsPage() {
         </div>
       </header>
 
+      {view === "uploads" && <UploadAnalysisView />}
+
+      {view === "distributions" && (
+      <>
       <div className="px-6 py-5 grid grid-cols-2 md:grid-cols-5 gap-6">
         <Stat label="Assets" value={fmtNum(rows.length)} sub={scopeLabel} />
         <Stat label="Images" value={fmtNum(images.length)} />
@@ -500,6 +533,8 @@ function MediaSpecsPage() {
           </section>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
