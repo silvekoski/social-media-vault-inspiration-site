@@ -8,7 +8,7 @@ import {
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -141,9 +141,6 @@ const navSections: NavSection[] = [
 ];
 
 function GlobalCaptureBar() {
-  const currentPath = useRouterState({
-    select: (s) => s.location.pathname,
-  });
   const currentOrg = useCurrentOrg();
   const projects = useProjectsForOrg();
   const currentProjectId = useCurrentProjectId();
@@ -199,18 +196,100 @@ function GlobalCaptureBar() {
           </div>
         </div>
         <div className="w-48 shrink-0 flex items-center justify-end gap-4 text-sm">
+          <ProfileMenu />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const currentUser = {
+  name: "Veikka Silvekoski",
+  email: "veikka@vault.app",
+  initials: "VS",
+};
+
+function ProfileMenu() {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Open account menu"
+        className="flex size-9 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {currentUser.initials}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 w-60 rounded border border-border bg-background py-1"
+        >
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+              {currentUser.initials}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">{currentUser.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{currentUser.email}</p>
+            </div>
+          </div>
+
+          <div className="my-1 border-t border-border" />
+
           <Link
             to="/settings"
-            className={
-              currentPath === "/settings" || currentPath.startsWith("/settings/")
-                ? "text-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           >
             Settings
           </Link>
+          <Link
+            to="/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            Account
+          </Link>
+
+          <div className="my-1 border-t border-border" />
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            Log out
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
