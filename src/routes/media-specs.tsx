@@ -163,7 +163,7 @@ function FilterRow({ label, options }: { label: string; options: ChipOption[] })
           className={
             "px-3 py-1.5 rounded-lg text-sm " +
             (o.active
-              ? "bg-white/10 text-foreground"
+              ? "bg-accent text-accent-foreground"
               : "text-muted-foreground ")
           }
         >

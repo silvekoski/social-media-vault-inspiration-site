@@ -279,8 +279,8 @@ function RoutingGraph({ platform }: { platform: ScraperPlatform }) {
                     (relatedOp?.primary === id
                       ? "border-foreground/60 bg-foreground/5"
                       : relatedOp?.fallback === id
-                        ? "border-neutral-400/50 bg-black/[0.02] border-dashed"
-                        : "border-black/10 bg-black/[0.02]")
+                        ? "border-muted-foreground/50 bg-muted/40 border-dashed"
+                        : "border-border bg-muted/40")
                   }
                 >
                   <div className="min-w-0">

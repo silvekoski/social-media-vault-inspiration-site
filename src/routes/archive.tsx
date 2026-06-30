@@ -391,8 +391,8 @@ function CreatorPicker({
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <div className="absolute z-40 mt-1 w-72 bg-white border border-black/10 rounded-lg shadow-xl overflow-hidden">
-            <div className="p-2 border-b border-black/5">
+          <div className="absolute z-40 mt-1 w-72 bg-background border border-border rounded overflow-hidden">
+            <div className="p-2 border-b border-border">
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

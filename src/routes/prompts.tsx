@@ -380,7 +380,7 @@ function Editor({
 const inCls =
   "w-full bg-transparent border-0 border-b border-black/10 px-0 py-1  text-xs text-foreground focus:outline-none focus:border-foreground/60";
 const taCls =
-  "w-full bg-neutral-100 border border-black/5 px-3 py-2  text-xs leading-relaxed text-foreground focus:outline-none focus:border-foreground/40 resize-y";
+  "w-full bg-muted border border-border px-3 py-2  text-xs leading-relaxed text-foreground focus:outline-none focus:border-foreground/40 resize-y";
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -534,7 +534,7 @@ function TestRun({ cfg }: { cfg: PromptConfig }) {
         )}
       </div>
       {output && (
-        <pre className="mt-3 bg-neutral-100 border border-black/5 p-3 text-xs leading-relaxed text-emerald-300/90 whitespace-pre-wrap">
+        <pre className="mt-3 bg-muted border border-border p-3 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
           {output}
         </pre>
       )}

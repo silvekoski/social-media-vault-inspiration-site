@@ -12,14 +12,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import {
-  Search,
-  ChevronDown,
-  LayoutDashboard,
-  FolderKanban,
-  Boxes,
-  Building2,
-} from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 import { organizations } from "../lib/mock-orgs";
 import { useCurrentOrg, setCurrentOrgId } from "../lib/current-org";
 import { useProjectsForOrg, useCurrentProjectId, setCurrentProjectId } from "../lib/current-project";
@@ -120,18 +113,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 type NavLink = { to: string; label: string };
 type NavSection =
-  | { type: "link"; to: string; label: string; icon: typeof LayoutDashboard }
-  | { type: "group"; key: string; label: string; scope: string; icon: typeof LayoutDashboard; items: NavLink[] };
+  | { type: "link"; to: string; label: string }
+  | { type: "group"; key: string; label: string; scope: string; items: NavLink[] };
 
 const navSections: NavSection[] = [
-  { type: "link", to: "/", label: "Overview", icon: LayoutDashboard },
-  { type: "link", to: "/projects", label: "Projects", icon: FolderKanban },
+  { type: "link", to: "/", label: "Overview" },
+  { type: "link", to: "/projects", label: "Projects" },
   {
     type: "group",
     key: "project",
     label: "Project",
     scope: "Project-specific",
-    icon: Boxes,
     items: [
       { to: "/runs", label: "Runs" },
       { to: "/creators", label: "Creators" },
@@ -143,7 +135,6 @@ const navSections: NavSection[] = [
     key: "organization",
     label: "Organization",
     scope: "Organization-wide",
-    icon: Building2,
     items: [
       { to: "/media-specs", label: "Media Specs" },
       { to: "/scrapers", label: "Scrapers" },
@@ -252,26 +243,23 @@ function Sidebar() {
         <nav className="space-y-1">
           {navSections.map((section) => {
             if (section.type === "link") {
-              const Icon = section.icon;
               const active = isLinkActive(section.to);
               return (
                 <Link
                   key={section.to}
                   to={section.to}
                   className={
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm " +
+                    "flex items-center rounded-md px-3 py-2 text-sm " +
                     (active
                       ? "bg-accent text-accent-foreground font-medium"
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground")
                   }
                 >
-                  <Icon className="size-4 shrink-0" />
                   {section.label}
                 </Link>
               );
             }
 
-            const Icon = section.icon;
             const isOpen = openGroups[section.key];
             const groupActive = section.items.some((i) => isLinkActive(i.to));
             return (
@@ -287,7 +275,6 @@ function Sidebar() {
                       : "text-muted-foreground hover:text-foreground")
                   }
                 >
-                  <Icon className="size-4 shrink-0" />
                   <span className="flex-1 text-left">{section.label}</span>
                   <ChevronDown
                     className={
@@ -295,7 +282,7 @@ function Sidebar() {
                     }
                   />
                 </button>
-                <p className="px-3 pl-10 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                <p className="px-3 text-[10px] uppercase tracking-wider text-muted-foreground/60">
                   {section.scope}
                 </p>
                 {isOpen && (
