@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { archivePostById, archivePosts } from "../lib/mock-archive";
-import { useScopedProjects } from "../lib/org-scope";
+import { allCreators, archivePostById, archivePosts } from "../lib/mock-archive";
+import { useScopedProjects, useScopedRoster } from "../lib/org-scope";
 import { useCurrentProjectId } from "../lib/current-project";
 import { fmtDate, fmtNum } from "../lib/date";
-import { Hash, Plus, Search, X } from "lucide-react";
+import { AtSign, Hash, Plus, Search, X } from "lucide-react";
 
 export const Route = createFileRoute("/targets")({
   head: () => ({
@@ -19,7 +19,11 @@ export const Route = createFileRoute("/targets")({
   component: TargetsPage,
 });
 
+const creatorById = new Map(allCreators.map((c) => [c.id, c] as const));
+
+type CreatorEdit = { ids: string[]; active: Record<string, boolean> };
 type HashtagEdit = { tags: string[]; active: Record<string, boolean> };
+type AutoTab = "profiles" | "hashtags";
 
 const HASHTAG_POOL = [
   "fyp",
@@ -57,7 +61,9 @@ function hashtagReach(tag: string): number {
 
 function TargetsPage() {
   const projects = useScopedProjects();
+  const roster = useScopedRoster();
   const currentProjectId = useCurrentProjectId();
+  const [autoTab, setAutoTab] = useState<AutoTab>("profiles");
 
   // Default the selector to the active project, else the first scoped project.
   const initialId =
@@ -69,6 +75,7 @@ function TargetsPage() {
   const project = projects.find((p) => p.id === selectedId) ?? projects[0];
 
   // Per-project local edits, seeded lazily from project data.
+  const [creatorEdits, setCreatorEdits] = useState<Record<string, CreatorEdit>>({});
   const [hashtagEdits, setHashtagEdits] = useState<Record<string, HashtagEdit>>({});
   const [postEdits, setPostEdits] = useState<Record<string, string[]>>({});
 
@@ -80,6 +87,12 @@ function TargetsPage() {
     );
   }
 
+  const creatorEdit: CreatorEdit =
+    creatorEdits[project.id] ??
+    {
+      ids: project.creatorIds,
+      active: Object.fromEntries(project.creatorIds.map((id) => [id, true])),
+    };
   const seededTags = seedHashtags(project.id, project.name);
   const hashtagEdit: HashtagEdit =
     hashtagEdits[project.id] ??
@@ -89,6 +102,9 @@ function TargetsPage() {
     };
   const pinnedIds = postEdits[project.id] ?? project.postIds;
 
+  function updateCreators(next: CreatorEdit) {
+    setCreatorEdits((s) => ({ ...s, [project!.id]: next }));
+  }
   function updateHashtags(next: HashtagEdit) {
     setHashtagEdits((s) => ({ ...s, [project!.id]: next }));
   }
@@ -98,7 +114,7 @@ function TargetsPage() {
 
   const dirty =
     project.mode === "auto"
-      ? hashtagEdits[project.id] !== undefined
+      ? creatorEdits[project.id] !== undefined || hashtagEdits[project.id] !== undefined
       : postEdits[project.id] !== undefined;
 
   return (
@@ -107,7 +123,7 @@ function TargetsPage() {
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">Scrape Targets</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Adjust which hashtags or posts each project scrapes. Changes apply to the next run.
+            Adjust which profiles, hashtags, or posts each project scrapes. Changes apply to the next run.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
@@ -154,7 +170,7 @@ function TargetsPage() {
           label="Targets"
           value={
             project.mode === "auto"
-              ? `${hashtagEdit.tags.length} hashtags`
+              ? `${creatorEdit.ids.length} profiles · ${hashtagEdit.tags.length} hashtags`
               : `${pinnedIds.length} posts`
           }
         />
@@ -162,10 +178,190 @@ function TargetsPage() {
       </div>
 
       {project.mode === "auto" ? (
-        <HashtagTargets edit={hashtagEdit} onChange={updateHashtags} />
+        <>
+          <div className="inline-flex items-center rounded-lg border border-border p-0.5 mb-6">
+            <button
+              onClick={() => setAutoTab("profiles")}
+              className={
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm " +
+                (autoTab === "profiles"
+                  ? "bg-accent text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              <AtSign className="size-3.5" /> Profiles
+              <span className="text-xs text-muted-foreground">{creatorEdit.ids.length}</span>
+            </button>
+            <button
+              onClick={() => setAutoTab("hashtags")}
+              className={
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm " +
+                (autoTab === "hashtags"
+                  ? "bg-accent text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              <Hash className="size-3.5" /> Hashtags
+              <span className="text-xs text-muted-foreground">{hashtagEdit.tags.length}</span>
+            </button>
+          </div>
+          {autoTab === "profiles" ? (
+            <CreatorTargets edit={creatorEdit} roster={roster} onChange={updateCreators} />
+          ) : (
+            <HashtagTargets edit={hashtagEdit} onChange={updateHashtags} />
+          )}
+        </>
       ) : (
         <PostTargets pinnedIds={pinnedIds} onChange={updatePosts} />
       )}
+    </div>
+  );
+}
+
+/* ---------------- Auto: profile targets ---------------- */
+
+function CreatorTargets({
+  edit,
+  roster,
+  onChange,
+}: {
+  edit: CreatorEdit;
+  roster: ReturnType<typeof useScopedRoster>;
+  onChange: (next: CreatorEdit) => void;
+}) {
+  const [q, setQ] = useState("");
+
+  const watched = edit.ids
+    .map((id) => creatorById.get(id))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c));
+
+  const watchedSet = new Set(edit.ids);
+  const needle = q.trim().toLowerCase();
+  const candidates = roster
+    .filter((c) => !watchedSet.has(c.id))
+    .filter(
+      (c) =>
+        !needle ||
+        c.username.toLowerCase().includes(needle) ||
+        c.displayName.toLowerCase().includes(needle),
+    )
+    .slice(0, 40);
+
+  function removeCreator(id: string) {
+    const { [id]: _drop, ...restActive } = edit.active;
+    onChange({ ids: edit.ids.filter((x) => x !== id), active: restActive });
+  }
+  function addCreator(id: string) {
+    onChange({ ids: [id, ...edit.ids], active: { ...edit.active, [id]: true } });
+  }
+  function toggleActive(id: string) {
+    onChange({ ...edit, active: { ...edit.active, [id]: !(edit.active[id] ?? true) } });
+  }
+
+  const activeCount = watched.filter((c) => edit.active[c.id] ?? true).length;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Watched */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs uppercase tracking-wider text-muted-foreground">
+            Watched profiles · {watched.length}
+          </h2>
+          <span className="text-xs text-muted-foreground">{activeCount} active</span>
+        </div>
+        <div className="rounded-lg border border-border divide-y divide-border">
+          {watched.map((c) => {
+            const isActive = edit.active[c.id] ?? true;
+            return (
+              <div key={c.id} className="flex items-center gap-3 px-3 py-2.5">
+                <img
+                  src={`https://picsum.photos/seed/${c.username}/48/48?grayscale`}
+                  alt=""
+                  className="size-8 rounded-lg bg-muted object-cover shrink-0"
+                  loading="lazy"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">@{c.username}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {c.platform} · {fmtNum(c.followers)} followers
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleActive(c.id)}
+                  className={
+                    "shrink-0 rounded border px-2 py-1 text-[11px] " +
+                    (isActive
+                      ? "border-border text-foreground"
+                      : "border-border text-muted-foreground")
+                  }
+                  title={isActive ? "Pause scraping this profile" : "Resume scraping"}
+                >
+                  {isActive ? "Active" : "Paused"}
+                </button>
+                <button
+                  onClick={() => removeCreator(c.id)}
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  title="Remove from project"
+                  aria-label={`Remove @${c.username}`}
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            );
+          })}
+          {watched.length === 0 && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              No profiles watched. Add some from the roster.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Add from roster */}
+      <section>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+          Add from roster
+        </h2>
+        <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 mb-2">
+          <Search className="size-4 text-muted-foreground shrink-0" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search profiles by handle or name"
+            className="bg-transparent outline-none text-sm w-full placeholder:text-muted-foreground"
+          />
+        </div>
+        <div className="rounded-lg border border-border divide-y divide-border max-h-[28rem] overflow-y-auto">
+          {candidates.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 px-3 py-2.5">
+              <img
+                src={`https://picsum.photos/seed/${c.username}/48/48?grayscale`}
+                alt=""
+                className="size-8 rounded-lg bg-muted object-cover shrink-0"
+                loading="lazy"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium truncate">@{c.username}</div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {c.platform} · {fmtNum(c.followers)} followers
+                </div>
+              </div>
+              <button
+                onClick={() => addCreator(c.id)}
+                className="shrink-0 inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-foreground hover:bg-accent"
+              >
+                <Plus className="size-3" /> Add
+              </button>
+            </div>
+          ))}
+          {candidates.length === 0 && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              {needle ? "No matching profiles." : "All roster profiles are added."}
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
