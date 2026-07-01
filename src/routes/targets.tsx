@@ -92,7 +92,7 @@ function TargetsPage() {
       </header>
 
       {/* Project selector + meta */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-border py-4 mb-8">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-8">
         <label className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Project</span>
           <div className="relative inline-flex items-center">
