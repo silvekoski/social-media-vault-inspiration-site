@@ -134,7 +134,6 @@ const navSections: NavSection[] = [
     heading: "Project",
     items: [
       { to: "/runs", label: "Runs" },
-      { to: "/creators", label: "Creators" },
       { to: "/targets", label: "Scrape Targets" },
       { to: "/archive", label: "Browse Data" },
     ],

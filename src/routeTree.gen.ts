@@ -17,7 +17,6 @@ import { Route as PromptsRouteImport } from './routes/prompts'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as OrganizationRouteImport } from './routes/organization'
 import { Route as MediaSpecsRouteImport } from './routes/media-specs'
-import { Route as CreatorsRouteImport } from './routes/creators'
 import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
@@ -64,11 +63,6 @@ const MediaSpecsRoute = MediaSpecsRouteImport.update({
   path: '/media-specs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CreatorsRoute = CreatorsRouteImport.update({
-  id: '/creators',
-  path: '/creators',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ArchiveRoute = ArchiveRouteImport.update({
   id: '/archive',
   path: '/archive',
@@ -99,7 +93,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/archive': typeof ArchiveRouteWithChildren
-  '/creators': typeof CreatorsRoute
   '/media-specs': typeof MediaSpecsRoute
   '/organization': typeof OrganizationRoute
   '/projects': typeof ProjectsRouteWithChildren
@@ -115,7 +108,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/archive': typeof ArchiveRouteWithChildren
-  '/creators': typeof CreatorsRoute
   '/media-specs': typeof MediaSpecsRoute
   '/organization': typeof OrganizationRoute
   '/projects': typeof ProjectsRouteWithChildren
@@ -132,7 +124,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/archive': typeof ArchiveRouteWithChildren
-  '/creators': typeof CreatorsRoute
   '/media-specs': typeof MediaSpecsRoute
   '/organization': typeof OrganizationRoute
   '/projects': typeof ProjectsRouteWithChildren
@@ -150,7 +141,6 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/archive'
-    | '/creators'
     | '/media-specs'
     | '/organization'
     | '/projects'
@@ -166,7 +156,6 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/archive'
-    | '/creators'
     | '/media-specs'
     | '/organization'
     | '/projects'
@@ -182,7 +171,6 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/archive'
-    | '/creators'
     | '/media-specs'
     | '/organization'
     | '/projects'
@@ -199,7 +187,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
   ArchiveRoute: typeof ArchiveRouteWithChildren
-  CreatorsRoute: typeof CreatorsRoute
   MediaSpecsRoute: typeof MediaSpecsRoute
   OrganizationRoute: typeof OrganizationRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
@@ -268,13 +255,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MediaSpecsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/creators': {
-      id: '/creators'
-      path: '/creators'
-      fullPath: '/creators'
-      preLoaderRoute: typeof CreatorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/archive': {
       id: '/archive'
       path: '/archive'
@@ -340,7 +320,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
   ArchiveRoute: ArchiveRouteWithChildren,
-  CreatorsRoute: CreatorsRoute,
   MediaSpecsRoute: MediaSpecsRoute,
   OrganizationRoute: OrganizationRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
