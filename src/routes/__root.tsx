@@ -11,6 +11,9 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+// Also import as a side-effect so Vite injects the styles on the client even
+// when the <link> stylesheet request is served with a JS MIME type by a proxy.
+import "../styles.css";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Search, ChevronDown } from "lucide-react";
 import { organizations } from "../lib/mock-orgs";
